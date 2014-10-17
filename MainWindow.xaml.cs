@@ -122,31 +122,36 @@
                         
                         DepthSpacePoint[] mappedColor = new DepthSpacePoint[_colorHeight*_colorWidth];
                         depthFrame.CopyFrameDataToArray(depths);
+
                         var cBitmap = (WriteableBitmap)colorFrame.ToBitmap();
                         byte[] colors = new byte[_colorHeight * cBitmap.BackBufferStride];
-
                         colorFrame.ToBitmap().CopyPixels(colors, cBitmap.BackBufferStride, 0);
 
-                        cm.MapColorFrameToDepthSpace(depths, mappedColor);
+                        this.depthBitmap = (WriteableBitmap)depthFrame.ToBitmap();
+                        this.colorBitmap = cBitmap;
 
+                        cm.MapColorFrameToDepthSpace(depths, mappedColor);
+                        byte[] mColor = new byte[_depthHeight * _depthWidth * Constants.BYTES_PER_PIXEL];
                         for (int i = 0; i < mappedColor.Length; i++)
                         {
-                            var colorPoint = mappedColor[i];
+                            var colorPoint =  mappedColor[i];
                             if (colorPoint.X != double.NegativeInfinity && colorPoint.Y != double.NegativeInfinity)
                             {
                                 var starting = i * 4;
-                                var B = colors[starting++];
-                                var G = colors[starting++];
-                                var R = colors[starting++];
-                                var A = colors[starting++];
+                                var depthPix = (int)(colorPoint.X * colorPoint.Y);
+                                mColor[depthPix++] = colors[starting++];
+                                mColor[depthPix++] = colors[starting++];
+                                mColor[depthPix++] = colors[starting++];
+                                mColor[depthPix++] = colors[starting++];
                             }
+                            
                         }
-                        byte[] mColor = new byte[_depthHeight * _depthWidth];
-                        depthCamera.Source = depthFrame.ToBitmap();
-                        this.depthBitmap = (WriteableBitmap)depthFrame.ToBitmap();
+                        WriteableBitmap bitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgra32, null);
+                        bitmap.WritePixels(new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight), mColor, this.depthBitmap.BackBufferStride, 0);
 
-                        colorCamera.Source = colorFrame.ToBitmap();
-                        this.colorBitmap = cBitmap;
+                        depthCamera.Source = depthFrame.ToBitmap();
+
+                        colorCamera.Source = bitmap;
 
                     }
                 }
