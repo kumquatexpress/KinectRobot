@@ -29,6 +29,9 @@
         KinectSensor _sensor;
         MultiSourceFrameReader _reader;
 
+        const int WIDTH = 1920;
+        const int HEIGHT = 1080;
+
         private const int MapDepthToByte = 8000 / 256;
 
         private KinectSensor kinectSensor = null;
@@ -45,7 +48,16 @@
 
         private byte[] depthPixels = null;
 
+        private byte[] depthBytes = null;
+
+        private byte[] colorBytes = null;
+
         private string statusText = null;
+
+        private byte[] colors = null;
+        private ushort[] depths = null;
+        private DepthSpacePoint[] mappedColor = null;
+        private int imageNum = 0;
 
         public MainWindow()
         {
@@ -73,6 +85,7 @@
 
             // initialize the components (controls) of the window
             this.InitializeComponent();
+            this.imageNum = 0;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -111,59 +124,65 @@
                 // Depth
                 using (var depthFrame = reference.DepthFrameReference.AcquireFrame())
                 {
-                    var _colorWidth = colorFrame.FrameDescription.Width;
-                    var _colorHeight = colorFrame.FrameDescription.Height;
-                    var _depthWidth = depthFrame.FrameDescription.Width;
-                    var _depthHeight = depthFrame.FrameDescription.Height;
-
-                    if (depthFrame != null && colorFrame != null)
+                    if (colorFrame != null && depthFrame != null)
                     {
-                        ushort[] depths = new ushort[_depthHeight*_depthWidth];
-                        
-                        DepthSpacePoint[] mappedColor = new DepthSpacePoint[_colorHeight*_colorWidth];
+                        var _colorWidth = colorFrame.FrameDescription.Width;
+                        var _colorHeight = colorFrame.FrameDescription.Height;
+                        var _depthWidth = depthFrame.FrameDescription.Width;
+                        var _depthHeight = depthFrame.FrameDescription.Height;
+
+                        ushort[] depths = new ushort[_depthHeight * _depthWidth];
+
+                        DepthSpacePoint[] mappedColor = new DepthSpacePoint[_colorHeight * _colorWidth];
                         depthFrame.CopyFrameDataToArray(depths);
+                        cm.MapColorFrameToDepthSpace(depths, mappedColor);
 
                         var cBitmap = (WriteableBitmap)colorFrame.ToBitmap();
                         byte[] colors = new byte[_colorHeight * cBitmap.BackBufferStride];
                         colorFrame.ToBitmap().CopyPixels(colors, cBitmap.BackBufferStride, 0);
 
+                        this.mappedColor = mappedColor;
+                        this.depths = depths;
+                        this.colors = colors;
                         this.depthBitmap = (WriteableBitmap)depthFrame.ToBitmap();
                         this.colorBitmap = cBitmap;
 
-                        cm.MapColorFrameToDepthSpace(depths, mappedColor);
-                        byte[] mColor = new byte[_depthHeight * _depthWidth * Constants.BYTES_PER_PIXEL];
-                        for (int i = 0; i < mappedColor.Length; i++)
-                        {
-                            var colorPoint =  mappedColor[i];
-                            if (colorPoint.X != double.NegativeInfinity && colorPoint.Y != double.NegativeInfinity)
-                            {
-                                var starting = i * 4;
-                                var depthPix = (int)(colorPoint.X * colorPoint.Y);
-                                mColor[depthPix++] = colors[starting++];
-                                mColor[depthPix++] = colors[starting++];
-                                mColor[depthPix++] = colors[starting++];
-                                mColor[depthPix++] = colors[starting++];
-                            }
-                            
-                        }
-                        WriteableBitmap bitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgra32, null);
-                        bitmap.WritePixels(new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight), mColor, this.depthBitmap.BackBufferStride, 0);
-
                         depthCamera.Source = depthFrame.ToBitmap();
-
-                        colorCamera.Source = bitmap;
-
+                        colorCamera.Source = colorFrame.ToBitmap();
                     }
                 }
-            }
-
-
-        
+            }      
         }
 
         private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.depthBitmap != null)
+            byte[] mColor = new byte[this.depths.Length * Constants.BYTES_PER_PIXEL];
+            for (int i = 0; i < this.mappedColor.Length; i++)
+            {
+                var colorPoint = this.mappedColor[i];
+                if (colorPoint.X != double.NegativeInfinity && colorPoint.Y != double.NegativeInfinity)
+                {
+                    var starting = i * 4;
+                    var depthPix = (int)(colorPoint.X * colorPoint.Y);
+                    mColor[depthPix++] = this.colors[starting++];
+                    mColor[depthPix++] = this.colors[starting++];
+                    mColor[depthPix++] = this.colors[starting++];
+                    mColor[depthPix++] = this.colors[starting++];
+                }
+            }
+
+            byte[] mDepth = new byte[this.depths.Length];
+            for (int i = 0; i < this.depths.Length; i++)
+            {
+                mDepth[i] = (byte)this.depths[i];
+            }
+            this.depthBytes = mDepth;
+            this.colorBytes = mColor;
+
+            string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
+            string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+
+            if (this.depthBitmap != null && this.colorBitmap != null)
             {
                 // create a png bitmap encoder which knows how to save a .png file
                 BitmapEncoder encoder = new PngBitmapEncoder();
@@ -171,11 +190,8 @@
                 // create frame from the writable bitmap and add to encoder
                 encoder.Frames.Add(BitmapFrame.Create(this.depthBitmap));
 
-                string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
 
-                string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-
-                string path = System.IO.Path.Combine(myPhotos, "KinectScreenshot-Depth-" + time + ".png");
+                string path = System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-"+ time + ".png");
 
                 // write the new file to disk
                 try
@@ -201,7 +217,7 @@
 
                 myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
-                path = System.IO.Path.Combine(myPhotos, "KinectScreenshot-Color-" + time + ".png");
+                path = System.IO.Path.Combine(myPhotos, "Color-"+this.imageNum+"-" + time + ".png");
                 // write the new file to disk
                 try
                 {
@@ -217,8 +233,48 @@
 
                 }
             }
+
+            if (this.depthBytes != null && this.colorBytes != null)
+            {
+                StringBuilder byteString = new StringBuilder();
+                for(int i = 0; i < depthBytes.Length; i++){
+                    byteString.Append(" " + depthBytes[i].ToString());
+                }
+                SaveData(System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-" + time), byteString.ToString(), Encoding.GetEncoding(1251));
+                byteString.Clear();
+                for (int i = 0; i < colorBytes.Length; i++)
+                {
+                    byteString.Append(" " + colorBytes[i].ToString());
+                }
+                SaveData(System.IO.Path.Combine(myPhotos, "Color-" + this.imageNum + "-" + time), byteString.ToString(), Encoding.GetEncoding(1251));
+            }
+
+            this.imageNum += 1;
         }
 
+        private void SaveData(String filename, String data, Encoding encoding)
+        {
+            const Int32 bufferSize = 2048;
+
+            if (System.IO.Path.GetExtension(filename).ToLower() != ".ppm")
+                filename += ".ppm";
+            using (var fs = new FileStream(filename, FileMode.Create, FileAccess.ReadWrite, FileShare.None, bufferSize))
+            {
+                using (var bw = new BinaryWriter(fs, encoding))
+                {
+                    var buffer = encoding.GetBytes(this.GetHeader(WIDTH, HEIGHT));
+                    bw.Write(buffer);
+
+                    buffer = encoding.GetBytes(data);
+                    bw.Write(buffer);
+                }
+            }
+        }
+
+        private String GetHeader(Int32 width, Int32 height)
+        {
+            return String.Format("P6 {0} {1} 255 ", width, height);
+        }
     }
 
     enum CameraMode
