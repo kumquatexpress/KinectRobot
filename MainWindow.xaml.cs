@@ -126,10 +126,10 @@
                 {
                     if (colorFrame != null && depthFrame != null)
                     {
-                        var _colorWidth = colorFrame.FrameDescription.Width;
-                        var _colorHeight = colorFrame.FrameDescription.Height;
-                        var _depthWidth = depthFrame.FrameDescription.Width;
-                        var _depthHeight = depthFrame.FrameDescription.Height;
+                        var _colorWidth = colorFrame.ColorFrameSource.FrameDescription.Width;
+                        var _colorHeight = colorFrame.ColorFrameSource.FrameDescription.Height;
+                        var _depthWidth = depthFrame.DepthFrameSource.FrameDescription.Width;
+                        var _depthHeight = depthFrame.DepthFrameSource.FrameDescription.Height;
 
                         ushort[] depths = new ushort[_depthHeight * _depthWidth];
 
@@ -138,8 +138,8 @@
                         cm.MapColorFrameToDepthSpace(depths, mappedColor);
 
                         var cBitmap = (WriteableBitmap)colorFrame.ToBitmap();
-                        byte[] colors = new byte[_colorHeight * cBitmap.BackBufferStride];
-                        colorFrame.ToBitmap().CopyPixels(colors, cBitmap.BackBufferStride, 0);
+                        byte[] colors = new byte[_colorHeight * _colorWidth * 4];
+                        colorFrame.CopyConvertedFrameDataToArray(colors, ColorImageFormat.Bgra);
 
                         this.mappedColor = mappedColor;
                         this.depths = depths;
@@ -156,28 +156,19 @@
 
         private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
         {
-            byte[] mColor = new byte[this.depths.Length * Constants.BYTES_PER_PIXEL];
+            byte[] mDepth = new byte[mappedColor.Length];
             for (int i = 0; i < this.mappedColor.Length; i++)
             {
-                var colorPoint = this.mappedColor[i];
-                if (colorPoint.X != double.NegativeInfinity && colorPoint.Y != double.NegativeInfinity)
+                var depthPoint = this.mappedColor[i];
+                if (depthPoint.X != double.NegativeInfinity && depthPoint.Y != double.NegativeInfinity)
                 {
-                    var starting = i * 4;
-                    var depthPix = (int)(colorPoint.X * colorPoint.Y);
-                    mColor[depthPix++] = this.colors[starting++];
-                    mColor[depthPix++] = this.colors[starting++];
-                    mColor[depthPix++] = this.colors[starting++];
-                    mColor[depthPix++] = this.colors[starting++];
+                    var depthPix = (int)(depthPoint.X * depthPoint.Y);
+                    mDepth[i] = (byte)this.depths[depthPix];
                 }
             }
 
-            byte[] mDepth = new byte[this.depths.Length];
-            for (int i = 0; i < this.depths.Length; i++)
-            {
-                mDepth[i] = (byte)this.depths[i];
-            }
             this.depthBytes = mDepth;
-            this.colorBytes = mColor;
+            this.colorBytes = this.colors;
 
             string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
             string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
@@ -238,21 +229,32 @@
             {
                 StringBuilder byteString = new StringBuilder();
                 for(int i = 0; i < depthBytes.Length; i++){
-                    byteString.Append(" " + depthBytes[i].ToString());
+                    if ((i+1) % WIDTH == 0)
+                    {
+                        byteString.Append("\n");
+                    }
+                    byteString.Append(depthBytes[i].ToString() + " ");
                 }
-                SaveData(System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-" + time), byteString.ToString(), Encoding.GetEncoding(1251));
+                SaveData(System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-" + time), byteString.ToString(), Encoding.GetEncoding(1251), 2);
                 byteString.Clear();
                 for (int i = 0; i < colorBytes.Length; i++)
                 {
-                    byteString.Append(" " + colorBytes[i].ToString());
+                    if ((i+1) % WIDTH == 0)
+                    {
+                        byteString.Append("\n");
+                    }
+                    if (i % 4 != 0)
+                    {
+                        byteString.Append(colorBytes[i].ToString() + " ");
+                    }
                 }
-                SaveData(System.IO.Path.Combine(myPhotos, "Color-" + this.imageNum + "-" + time), byteString.ToString(), Encoding.GetEncoding(1251));
+                SaveData(System.IO.Path.Combine(myPhotos, "Color-" + this.imageNum + "-" + time), byteString.ToString(), Encoding.GetEncoding(1251), 3);
             }
 
             this.imageNum += 1;
         }
 
-        private void SaveData(String filename, String data, Encoding encoding)
+        private void SaveData(String filename, String data, Encoding encoding, Int32 type)
         {
             const Int32 bufferSize = 2048;
 
@@ -262,7 +264,7 @@
             {
                 using (var bw = new BinaryWriter(fs, encoding))
                 {
-                    var buffer = encoding.GetBytes(this.GetHeader(WIDTH, HEIGHT));
+                    var buffer = encoding.GetBytes(this.GetHeader(type, WIDTH, HEIGHT));
                     bw.Write(buffer);
 
                     buffer = encoding.GetBytes(data);
@@ -271,9 +273,9 @@
             }
         }
 
-        private String GetHeader(Int32 width, Int32 height)
+        private String GetHeader(Int32 type, Int32 width, Int32 height)
         {
-            return String.Format("P6 {0} {1} 255 ", width, height);
+            return String.Format("P{0}\n{1} {2}\n255\n", type, width, height);
         }
     }
 
