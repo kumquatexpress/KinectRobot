@@ -43,7 +43,7 @@
         private WriteableBitmap depthBitmap = null;
 
         private WriteableBitmap colorBitmap = null;
-
+        private FrameDescription colorFrameDescription = null;
         private CoordinateMapper cm = null;
 
         private byte[] depthPixels = null;
@@ -53,6 +53,7 @@
         private byte[] colorBytes = null;
 
         private string statusText = null;
+        private bool TAKE_SCREENSHOT = false;
 
         private byte[] colors = null;
         private ushort[] depths = null;
@@ -69,12 +70,14 @@
 
             // get FrameDescription from DepthFrameSource
             this.depthFrameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
+            this.colorFrameDescription = this.kinectSensor.ColorFrameSource.CreateFrameDescription(ColorImageFormat.Bgra);
 
             // allocate space to put the pixels being received and converted
             this.depthPixels = new byte[this.depthFrameDescription.Width * this.depthFrameDescription.Height];
 
             // create the bitmap to display
             this.depthBitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Gray8, null);
+            this.colorBitmap = new WriteableBitmap(this.colorFrameDescription.Width, this.colorFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgr32, null);
 
             // open the sensor
             this.kinectSensor.Open();
@@ -131,24 +134,63 @@
                         var _depthWidth = depthFrame.DepthFrameSource.FrameDescription.Width;
                         var _depthHeight = depthFrame.DepthFrameSource.FrameDescription.Height;
 
-                        ushort[] depths = new ushort[_depthHeight * _depthWidth];
+                        using (Microsoft.Kinect.KinectBuffer depthBuffer = depthFrame.LockImageBuffer())
+                        {
+                            // verify data and write the color data to the display bitmap
+                            if (((this.depthFrameDescription.Width * this.depthFrameDescription.Height) == (depthBuffer.Size / this.depthFrameDescription.BytesPerPixel)) &&
+                                (this.depthFrameDescription.Width == this.depthBitmap.PixelWidth) && (this.depthFrameDescription.Height == this.depthBitmap.PixelHeight))
+                            {
+                                // Note: In order to see the full range of depth (including the less reliable far field depth)
+                                // we are setting maxDepth to the extreme potential depth threshold
+                                ushort maxDepth = ushort.MaxValue;
 
-                        DepthSpacePoint[] mappedColor = new DepthSpacePoint[_colorHeight * _colorWidth];
-                        depthFrame.CopyFrameDataToArray(depths);
-                        cm.MapColorFrameToDepthSpace(depths, mappedColor);
+                                // If you wish to filter by reliable depth distance, uncomment the following line:
+                                //// maxDepth = depthFrame.DepthMaxReliableDistance
 
-                        var cBitmap = (WriteableBitmap)colorFrame.ToBitmap();
-                        byte[] colors = new byte[_colorHeight * _colorWidth * 4];
-                        colorFrame.CopyConvertedFrameDataToArray(colors, ColorImageFormat.Bgra);
+                                this.ProcessDepthFrameData(depthBuffer.UnderlyingBuffer, depthBuffer.Size, depthFrame.DepthMinReliableDistance, maxDepth);
+                                this.RenderDepthPixels();
+                            }
+                        }
 
-                        this.mappedColor = mappedColor;
-                        this.depths = depths;
-                        this.colors = colors;
-                        this.depthBitmap = (WriteableBitmap)depthFrame.ToBitmap();
-                        this.colorBitmap = cBitmap;
+                        using (KinectBuffer colorBuffer = colorFrame.LockRawImageBuffer())
+                        {
+                            this.colorBitmap.Lock();
+                            // verify data and write the new color frame data to the display bitmap
+                            if ((_colorWidth == this.colorBitmap.PixelWidth) && (_colorHeight == this.colorBitmap.PixelHeight))
+                            {
+                                colorFrame.CopyConvertedFrameDataToIntPtr(
+                                    this.colorBitmap.BackBuffer,
+                                    (uint)(_colorWidth * _colorHeight * 4),
+                                    ColorImageFormat.Bgra);
 
-                        depthCamera.Source = depthFrame.ToBitmap();
-                        colorCamera.Source = colorFrame.ToBitmap();
+                                this.colorBitmap.AddDirtyRect(new Int32Rect(0, 0, this.colorBitmap.PixelWidth, this.colorBitmap.PixelHeight));
+                            }
+                            this.colorBitmap.Unlock();
+                        }
+
+                        if (TAKE_SCREENSHOT)
+                        {
+                            ushort[] depths = new ushort[_depthHeight * _depthWidth];
+
+                            DepthSpacePoint[] mappedColor = new DepthSpacePoint[_colorHeight * _colorWidth];
+                            depthFrame.CopyFrameDataToArray(depths);
+                            cm.MapColorFrameToDepthSpace(depths, mappedColor);
+
+                            byte[] colors = new byte[_colorHeight * _colorWidth * 4];
+                            //this is the byte array that is converted into a ppm in the end, make it rgba form
+                            colorFrame.CopyConvertedFrameDataToArray(colors, ColorImageFormat.Rgba);
+
+                            this.mappedColor = mappedColor;
+                            this.depths = depths;
+                            this.colors = colors;
+
+                            this.ScreenshotSaveFile();
+                            TAKE_SCREENSHOT = false;
+                        }
+                        
+
+                        depthCamera.Source = this.depthBitmap;
+                        colorCamera.Source = this.colorBitmap;
                     }
                 }
             }      
@@ -156,13 +198,18 @@
 
         private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
         {
+            this.TAKE_SCREENSHOT = true;
+        }
+
+        private void ScreenshotSaveFile()
+        {
             byte[] mDepth = new byte[mappedColor.Length];
             for (int i = 0; i < this.mappedColor.Length; i++)
             {
                 var depthPoint = this.mappedColor[i];
                 if (depthPoint.X != double.NegativeInfinity && depthPoint.Y != double.NegativeInfinity)
                 {
-                    var depthPix = (int)(depthPoint.X * depthPoint.Y);
+                    var depthPix = (int)(depthPoint.Y * this.depthFrameDescription.Width + depthPoint.X);
                     mDepth[i] = (byte)this.depths[depthPix];
                 }
             }
@@ -235,26 +282,31 @@
                     }
                     byteString.Append(depthBytes[i].ToString() + " ");
                 }
-                SaveData(System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-" + time), byteString.ToString(), Encoding.GetEncoding(1251), 2);
+                SaveData(System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-" + time), depthBytes, Encoding.GetEncoding(1251), 5);
                 byteString.Clear();
+
+                var realColors = new byte[(colorBytes.Length * 3) /4];
+                var counter = 0;
                 for (int i = 0; i < colorBytes.Length; i++)
                 {
                     if ((i+1) % WIDTH == 0)
                     {
                         byteString.Append("\n");
                     }
-                    if (i % 4 != 0)
+                    if (i % 4 != 3)
                     {
                         byteString.Append(colorBytes[i].ToString() + " ");
+                        realColors[counter] = colorBytes[i];
+                        counter += 1;
                     }
                 }
-                SaveData(System.IO.Path.Combine(myPhotos, "Color-" + this.imageNum + "-" + time), byteString.ToString(), Encoding.GetEncoding(1251), 3);
+                SaveData(System.IO.Path.Combine(myPhotos, "Color-" + this.imageNum + "-" + time), realColors, Encoding.GetEncoding(1251), 6);
             }
 
             this.imageNum += 1;
         }
 
-        private void SaveData(String filename, String data, Encoding encoding, Int32 type)
+        private void SaveData(String filename, byte[] data, Encoding encoding, Int32 type)
         {
             const Int32 bufferSize = 2048;
 
@@ -262,20 +314,45 @@
                 filename += ".ppm";
             using (var fs = new FileStream(filename, FileMode.Create, FileAccess.ReadWrite, FileShare.None, bufferSize))
             {
-                using (var bw = new BinaryWriter(fs, encoding))
+                using (var bw = new BinaryWriter(fs))
                 {
-                    var buffer = encoding.GetBytes(this.GetHeader(type, WIDTH, HEIGHT));
-                    bw.Write(buffer);
-
-                    buffer = encoding.GetBytes(data);
-                    bw.Write(buffer);
+                    bw.Write(encoding.GetBytes(this.GetHeader(type, WIDTH, HEIGHT)));
+                    bw.Write(data);
                 }
+                
             }
         }
 
         private String GetHeader(Int32 type, Int32 width, Int32 height)
         {
             return String.Format("P{0}\n{1} {2}\n255\n", type, width, height);
+        }
+
+      
+        private unsafe void ProcessDepthFrameData(IntPtr depthFrameData, uint depthFrameDataSize, ushort minDepth, ushort maxDepth)
+        {
+            // depth frame data is a 16 bit value
+            ushort* frameData = (ushort*)depthFrameData;
+
+            // convert depth to a visual representation
+            for (int i = 0; i < (int)(depthFrameDataSize / this.depthFrameDescription.BytesPerPixel); ++i)
+            {
+                // Get the depth for this pixel
+                ushort depth = frameData[i];
+
+                // To convert to a byte, we're mapping the depth value to the byte range.
+                // Values outside the reliable depth range are mapped to 0 (black).
+                this.depthPixels[i] = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MapDepthToByte) : 0);
+            }
+        }
+
+        private void RenderDepthPixels()
+        {
+            this.depthBitmap.WritePixels(
+                new Int32Rect(0, 0, this.depthBitmap.PixelWidth, this.depthBitmap.PixelHeight),
+                this.depthPixels,
+                this.depthBitmap.PixelWidth,
+                0);
         }
     }
 
