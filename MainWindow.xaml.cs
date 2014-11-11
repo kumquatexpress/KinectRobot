@@ -20,6 +20,7 @@
     using System.Windows.Media.Imaging;
     using System.Windows.Navigation;
     using System.Windows.Shapes;
+    using System.IO.Ports;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -28,33 +29,33 @@
     {
         KinectSensor _sensor;
         MultiSourceFrameReader _reader;
+        SerialPort port;
 
         const int WIDTH = 1920;
         const int HEIGHT = 1080;
 
+        const byte DRIVE = 137;
+        const byte START = 128;
+        const int CCW_DEGREE = 57;
+        const int CW_DEGREE = 57;
+        const int STEPS_FORWARD = 10;
+        const int STEPS_BACKWARD = 10;
+
         private const int MapDepthToByte = 8000 / 256;
 
         private KinectSensor kinectSensor = null;
-
         private DepthFrameReader depthFrameReader = null;
-
         private FrameDescription depthFrameDescription = null;
-
         private WriteableBitmap depthBitmap = null;
-
         private WriteableBitmap colorBitmap = null;
         private FrameDescription colorFrameDescription = null;
         private CoordinateMapper cm = null;
 
         private byte[] depthPixels = null;
-
         private byte[] depthBytes = null;
-
         private byte[] colorBytes = null;
 
-        private string statusText = null;
         private bool TAKE_SCREENSHOT = false;
-
         private byte[] colors = null;
         private ushort[] depths = null;
         private DepthSpacePoint[] mappedColor = null;
@@ -65,6 +66,9 @@
             // get the kinectSensor object
             this.kinectSensor = KinectSensor.GetDefault();
 
+            //open the robot com port
+            this.port = new SerialPort("COM1", 57600, Parity.None, 8, StopBits.One);
+            this.TurnOnRoomba();
             // open the reader for the depth frames
             this.depthFrameReader = this.kinectSensor.DepthFrameSource.OpenReader();
 
@@ -89,6 +93,44 @@
             // initialize the components (controls) of the window
             this.InitializeComponent();
             this.imageNum = 0;
+        }
+
+        private void TurnOnRoomba()
+        {
+            byte[] send = { START };
+
+            this.port.DtrEnable = true;
+            this.port.RtsEnable = true;
+            this.port.Handshake = Handshake.RequestToSend;
+            this.port.ReadTimeout = 6000;
+            this.port.WriteTimeout = 5000;
+            this.port.Open();
+
+            this.port.Write(send, 0, send.Length);
+        }
+
+        private void ForwardButton_Click(object sender, RoutedEventArgs e)
+        {
+            byte[] send = { DRIVE, 0x01, 0xF0, 0x00, 0x00 };
+            this.port.Write(send, 0, send.Length);
+        }
+
+        private void BackwardButton_Click(object sender, RoutedEventArgs e)
+        {
+            byte[] send = { DRIVE, 0xFE, 0x0C, 0x00, 0x00 };
+            this.port.Write(send, 0, send.Length);
+        }
+
+        private void RotateCWButton_Click(object sender, RoutedEventArgs e)
+        {
+            byte[] send = { DRIVE, 0x00, 0x00, 0xFF, 0xFF };
+            this.port.Write(send, 0, send.Length);
+        }
+
+        private void RotateCCWButton_Click(object sender, RoutedEventArgs e)
+        {
+            byte[] send = { DRIVE, 0x00, 0x00, 0x00, 0x01 };
+            this.port.Write(send, 0, send.Length);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -327,8 +369,7 @@
         {
             return String.Format("P{0}\n{1} {2}\n255\n", type, width, height);
         }
-
-      
+  
         private unsafe void ProcessDepthFrameData(IntPtr depthFrameData, uint depthFrameDataSize, ushort minDepth, ushort maxDepth)
         {
             // depth frame data is a 16 bit value
