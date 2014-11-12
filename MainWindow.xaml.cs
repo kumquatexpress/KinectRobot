@@ -67,8 +67,15 @@
             this.kinectSensor = KinectSensor.GetDefault();
 
             //open the robot com port
-            this.port = new SerialPort("COM1", 57600, Parity.None, 8, StopBits.One);
-            this.TurnOnRoomba();
+            try
+            {
+                this.port = new SerialPort("COM1", 57600, Parity.None, 8, StopBits.One);
+                this.TurnOnRoomba();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Robot not detected, unable to turn on");
+            }
             // open the reader for the depth frames
             this.depthFrameReader = this.kinectSensor.DepthFrameSource.OpenReader();
 
@@ -121,13 +128,13 @@
             this.port.Write(send, 0, send.Length);
         }
 
-        private void RotateCWButton_Click(object sender, RoutedEventArgs e)
+        private void RotateCW_Click(object sender, RoutedEventArgs e)
         {
             byte[] send = { DRIVE, 0x00, 0x00, 0xFF, 0xFF };
             this.port.Write(send, 0, send.Length);
         }
 
-        private void RotateCCWButton_Click(object sender, RoutedEventArgs e)
+        private void RotateCCW_Click(object sender, RoutedEventArgs e)
         {
             byte[] send = { DRIVE, 0x00, 0x00, 0x00, 0x01 };
             this.port.Write(send, 0, send.Length);
@@ -246,13 +253,17 @@
         private void ScreenshotSaveFile()
         {
             byte[] mDepth = new byte[mappedColor.Length];
+            var minDepth = 0;
+            ushort maxDepth = ushort.MaxValue;
+
             for (int i = 0; i < this.mappedColor.Length; i++)
             {
                 var depthPoint = this.mappedColor[i];
                 if (depthPoint.X != double.NegativeInfinity && depthPoint.Y != double.NegativeInfinity)
                 {
                     var depthPix = (int)(depthPoint.Y * this.depthFrameDescription.Width + depthPoint.X);
-                    mDepth[i] = (byte)this.depths[depthPix];
+                    var depth = this.depths[depthPix];
+                    mDepth[i] = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MapDepthToByte) : 0);
                 }
             }
 
