@@ -10,6 +10,7 @@
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using System.Threading;
     using System.Windows;
     using System.Drawing;
     using System.Windows.Controls;
@@ -69,10 +70,10 @@
             //open the robot com port
             try
             {
-                this.port = new SerialPort("COM1", 57600, Parity.None, 8, StopBits.One);
+                this.port = new SerialPort("COM9", 57600, Parity.None, 8, StopBits.One);
                 this.TurnOnRoomba();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine("Robot not detected, unable to turn on");
             }
@@ -104,40 +105,62 @@
 
         private void TurnOnRoomba()
         {
-            byte[] send = { START };
+            byte[] send = { START, 132 };
 
-            this.port.DtrEnable = true;
-            this.port.RtsEnable = true;
-            this.port.Handshake = Handshake.RequestToSend;
-            this.port.ReadTimeout = 6000;
-            this.port.WriteTimeout = 5000;
+            this.port.ReadTimeout = 10;
+            this.port.WriteTimeout = 1000;
+
             this.port.Open();
 
+            this.port.Write(send, 0, send.Length);
+
+            this.port.Write(new byte[] { 139, 25, 0, 128 }, 0, 4);
+
+            this.port.Write(new byte[] { 140, 1, 1, 48, 20 }, 0, 5);
+
+            this.port.Write(new byte[] { 141, 1 }, 0, 2);
+        }
+
+        /*
+         * Stops moving after a given amount of milliseconds
+         */
+        private void StopMoving(int after)
+        {
+            Thread.Sleep(after);
+            byte[] send = { DRIVE, 0x00, 0x00, 0x00, 0x00 };
             this.port.Write(send, 0, send.Length);
         }
 
         private void ForwardButton_Click(object sender, RoutedEventArgs e)
         {
-            byte[] send = { DRIVE, 0x01, 0xF0, 0x00, 0x00 };
+            byte[] send = { DRIVE, 0x01, 0xF4, 0x03, 0xE8};
             this.port.Write(send, 0, send.Length);
+            
+            StopMoving(200);
         }
 
         private void BackwardButton_Click(object sender, RoutedEventArgs e)
         {
-            byte[] send = { DRIVE, 0xFE, 0x0C, 0x00, 0x00 };
+            byte[] send = { DRIVE, 0xFE, 0x0C, 0x03, 0xE8};
             this.port.Write(send, 0, send.Length);
+
+            StopMoving(200);
         }
 
         private void RotateCW_Click(object sender, RoutedEventArgs e)
         {
-            byte[] send = { DRIVE, 0x00, 0x00, 0xFF, 0xFF };
+            byte[] send = { DRIVE, 0xF1, 0xF1, 0x00, 0x00};
             this.port.Write(send, 0, send.Length);
+
+            StopMoving(200);
         }
 
         private void RotateCCW_Click(object sender, RoutedEventArgs e)
         {
-            byte[] send = { DRIVE, 0x00, 0x00, 0x00, 0x01 };
+            byte[] send = { DRIVE, 0x01, 0xF0, 0x00, 0x00};
             this.port.Write(send, 0, send.Length);
+
+            StopMoving(200);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
