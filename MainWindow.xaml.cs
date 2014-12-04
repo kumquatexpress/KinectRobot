@@ -36,11 +36,11 @@
         const int HEIGHT = 1080;
 
         const byte DRIVE = 137;
+        const byte CONTROL = 132;
         const byte START = 128;
-        const int CCW_DEGREE = 57;
-        const int CW_DEGREE = 57;
-        const int STEPS_FORWARD = 10;
-        const int STEPS_BACKWARD = 10;
+
+        int MOVE_TIME = 200;
+        int ROTATE_TIME = 200;
 
         private const int MapDepthToByte = 8000 / 256;
 
@@ -101,23 +101,20 @@
             // initialize the components (controls) of the window
             this.InitializeComponent();
             this.imageNum = 0;
+            this.MouseDown += delegate { DragMove(); };
         }
 
         private void TurnOnRoomba()
         {
-            byte[] send = { START, 132 };
-
+            byte[] send = { START, CONTROL };
             this.port.ReadTimeout = 10;
             this.port.WriteTimeout = 1000;
-
             this.port.Open();
 
             this.port.Write(send, 0, send.Length);
-
+            //makes it play a song to verify it's on
             this.port.Write(new byte[] { 139, 25, 0, 128 }, 0, 4);
-
             this.port.Write(new byte[] { 140, 1, 1, 48, 20 }, 0, 5);
-
             this.port.Write(new byte[] { 141, 1 }, 0, 2);
         }
 
@@ -136,7 +133,7 @@
             byte[] send = { DRIVE, 0x01, 0xF4, 0x03, 0xE8};
             this.port.Write(send, 0, send.Length);
             
-            StopMoving(200);
+            StopMoving(MOVE_TIME);
         }
 
         private void BackwardButton_Click(object sender, RoutedEventArgs e)
@@ -144,7 +141,7 @@
             byte[] send = { DRIVE, 0xFE, 0x0C, 0x03, 0xE8};
             this.port.Write(send, 0, send.Length);
 
-            StopMoving(200);
+            StopMoving(MOVE_TIME);
         }
 
         private void RotateCW_Click(object sender, RoutedEventArgs e)
@@ -152,7 +149,7 @@
             byte[] send = { DRIVE, 0xF1, 0xF1, 0x00, 0x00};
             this.port.Write(send, 0, send.Length);
 
-            StopMoving(200);
+            StopMoving(ROTATE_TIME);
         }
 
         private void RotateCCW_Click(object sender, RoutedEventArgs e)
@@ -160,7 +157,17 @@
             byte[] send = { DRIVE, 0x01, 0xF0, 0x00, 0x00};
             this.port.Write(send, 0, send.Length);
 
-            StopMoving(200);
+            StopMoving(ROTATE_TIME);
+        }
+
+        private void SubmitMove_Click(object sender, RoutedEventArgs e)
+        {
+            MOVE_TIME = Convert.ToInt32(this.SleepTime_Move.Text);
+        }
+
+        private void SubmitRotate_Click(object sender, RoutedEventArgs e)
+        {
+            ROTATE_TIME = Convert.ToInt32(this.SleepTime_Rotate.Text);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
