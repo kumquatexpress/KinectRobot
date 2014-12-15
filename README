@@ -3,6 +3,6 @@ KinectRobot
 
 1. Install Kinect v2 SDK, downloadable from Microsoft. Currently using the public release version 2.0
 2. Install the v3.2.0.0 driver from Prolific for the serial-to-usb cable. Found here http://www.miklor.com/COM/software/Win_Driver_Prolific_3.2.0.0.exe
-3. To use the new prolific driver, use device manager and go to the serial-to-usb, then try to update the driver and use the ones on the machine. One of these should be 3.2.0.0
-4. The robot is currently set to connect on COM port 9. If your usb isn't connected to com9, you can go to device manager -> prolific serial-to-usb -> advanced -> change com port
-5. The robot should be turned on before the GUI is run. It should make a sound when the GUI turns on.
+3. To use the new prolific driver, in the device manager details for the serial-to-USB, select "Update Driver -> Browse My Computer -> Let me pick from a list" and select the driver that is not "3.4.*".
+4. The robot is currently set to connect on COM port 9. If your usb isn't connected to com9, you can go to device manager -> prolific serial-to-usb -> advanced -> change com port. Also verify the bit rate is set to 57600.
+5. The robot should be turned on and not plugged in before the GUI is run. It should make a sound when the GUI turns on. After the GUI starts the robot can be connected to AC power.
