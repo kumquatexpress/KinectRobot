@@ -56,7 +56,8 @@
         private byte[] depthBytes = null;
         private byte[] colorBytes = null;
 
-        private bool TAKE_SCREENSHOT = false;
+        private bool takeScreenshot = false;
+        private bool dumpPpms = false;
         private byte[] colors = null;
         private ushort[] depths = null;
         private DepthSpacePoint[] mappedColor = null;
@@ -250,7 +251,7 @@
                             this.colorBitmap.Unlock();
                         }
 
-                        if (TAKE_SCREENSHOT)
+                        if (takeScreenshot || dumpPpms)
                         {
                             ushort[] depths = new ushort[_depthHeight * _depthWidth];
 
@@ -266,8 +267,14 @@
                             this.depths = depths;
                             this.colors = colors;
 
-                            this.ScreenshotSaveFile();
-                            TAKE_SCREENSHOT = false;
+                            if (takeScreenshot)
+                            {
+                                this.ScreenshotSaveFile();
+                                takeScreenshot = false;
+                            } else if (dumpPpms)
+                            {
+                                this.DumpPpms();
+                            }
                         }
                         
 
@@ -280,7 +287,12 @@
 
         private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
         {
-            this.TAKE_SCREENSHOT = true;
+            this.takeScreenshot = true;
+        }
+
+        private void DumpPpms_Click(object sender, RoutedEventArgs e)
+        {
+            this.dumpPpms = true;
         }
 
         private void ScreenshotSaveFile()
@@ -390,6 +402,18 @@
             }
 
             this.imageNum += 1;
+        }
+
+        private void DumpPpms()
+        {
+            SaveData(GetPpmFilename("Color"), this.colorBytes, Encoding.Default, 6);
+            SaveData(GetPpmFilename("Depth"), this.depthBytes, Encoding.Default, 6);
+            //SaveData(GetPpmFilename("Combined"), this.mappedColor, Encoding.Default, 6);
+        }
+
+        private string GetPpmFilename(String description)
+        {
+            return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), description + "-" + this.imageNum + ".ppm");
         }
 
         private void SaveData(String filename, byte[] data, Encoding encoding, Int32 type)

@@ -20,12 +20,12 @@
         </Viewbox>
         <TextBox Grid.Row="2" Name="SleepTime_Move" Height="Auto" HorizontalAlignment="Left" Margin="10 10 0 10" Width="150" />
         <Button Grid.Row="2" Content="Move Time" Height="Auto" HorizontalAlignment="Right" Margin="0,10,978,10" Click="SubmitMove_Click"/>
-        <Button Grid.Row="2" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="303,10,856,10" Click="ForwardButton_Click" />
-        <TextBox Grid.Row="2" Name="SleepTime_Rotate" Height="Auto" HorizontalAlignment="Left" Margin="571,10,0,10" Width="150" />
+        <Button Grid.Row="2" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="385,10,764,10" Click="ForwardButton_Click" Width="57" />
+        <TextBox Grid.Row="2" Name="SleepTime_Rotate" Height="Auto" HorizontalAlignment="Left" Margin="611,10,0,10" Width="110" />
         <Button Grid.Row="2" Content="Rotate Time" Height="Auto" HorizontalAlignment="Right" Margin="0,10,412,10" Click="SubmitRotate_Click"/>
-        <Button Grid.Row="2" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="485,10,666,10" Click="BackwardButton_Click" />
-        <Button Grid.Row="2" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="233,10,908,10" Click="RotateCCW_Click" />
-        <Button Grid.Row="2" Content="RotateCW" Height="Auto" HorizontalAlignment="Center" Margin="423,10,726,10" Click="RotateCW_Click" />
-        <Button Grid.Row="2" Content="Screenshot" Height="Auto" HorizontalAlignment="Center" Margin="355,10,789,10" Click="ScreenshotButton_Click" />
+        <Button Grid.Row="2" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="447,10,689,10" Click="BackwardButton_Click" Width="70" />
+        <Button Grid.Row="2" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="233,10,899,10" Click="RotateCCW_Click" Width="74" />
+        <Button Grid.Row="2" Content="RotateCW" Height="Auto" HorizontalAlignment="Center" Margin="312,10,826,10" Click="RotateCW_Click" Width="68" />
+        <Button Grid.Row="2" Content="Dump .ppms" Height="Auto" HorizontalAlignment="Center" Margin="522,10,600,10" Click="DumpPpms_Click" Width="84" />
     </Grid>
 </Window>
