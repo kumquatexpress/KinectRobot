@@ -39,7 +39,7 @@
         const byte CONTROL = 132;
         const byte START = 128;
 
-        int MOVE_TIME = 200;
+        int MOVE_TIME = 400;
         int ROTATE_TIME = 200;
 
         private const int MapDepthToByte = 8000 / 256;
@@ -101,7 +101,6 @@
             // initialize the components (controls) of the window
             this.InitializeComponent();
             this.imageNum = 0;
-            this.MouseDown += delegate { DragMove(); };
         }
 
         private void TurnOnRoomba()
@@ -147,9 +146,13 @@
         private void RotateCW_Click(object sender, RoutedEventArgs e)
         {
             byte[] send = { DRIVE, 0xF1, 0xF1, 0x00, 0x00};
-            this.port.Write(send, 0, send.Length);
+            for (int i = 0; i < 5; i++)
+            {
+                this.port.Write(send, 0, send.Length);
 
-            StopMoving(ROTATE_TIME);
+                StopMoving(ROTATE_TIME);
+                Thread.Sleep(300);
+            }
         }
 
         private void RotateCCW_Click(object sender, RoutedEventArgs e)

@@ -1,35 +1,31 @@
 ﻿<Window x:Class="KinectCoordinateMapping.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="900" Width="800"
-        Loaded="Window_Loaded" Closed="Window_Closed" WindowStyle="None">
-    <Grid>
+        Title="MainWindow" Height="440" Width="1205.97"
+        Loaded="Window_Loaded" Closed="Window_Closed">
+    <Grid Margin="0,0,-8,0" Height="400" VerticalAlignment="Bottom">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"></RowDefinition>
             <RowDefinition Height="270"></RowDefinition>
-            <RowDefinition Height="30"></RowDefinition>
-            <RowDefinition Height="270"></RowDefinition>
-            <RowDefinition Height="100"></RowDefinition>
-            <RowDefinition Height="100"></RowDefinition>
             <RowDefinition Height="100"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Margin="0 0 -1 0" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontFamily="Segoe UI" FontSize="18">Color Camera</TextBlock>
-        <Viewbox Grid.Row="1" HorizontalAlignment="Center">
+        <TextBlock Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Bottom" FontFamily="Segoe UI" FontSize="18" Margin="10,0,0,0">Color Camera</TextBlock>
+        <Viewbox Grid.Row="1" HorizontalAlignment="Left">
             <Image Name="colorCamera" Width="480" Height="270" Stretch="UniformToFill"/>
         </Viewbox>
-        <TextBlock Grid.Row="2" Margin="0 0 -1 0" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontFamily="Segoe UI" FontSize="18">Depth Camera</TextBlock>
-        <Viewbox Grid.Row="3" HorizontalAlignment="Center">
+        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Bottom" FontFamily="Segoe UI" FontSize="18" Margin="0,0,10,0">Depth Camera</TextBlock>
+        <Viewbox Grid.Row="1" HorizontalAlignment="Right">
             <Image Name="depthCamera" Width="480" Height="270" Stretch="UniformToFill"/>
         </Viewbox>
-        <TextBox Grid.Row="4" Name="SleepTime_Move" Height="Auto" HorizontalAlignment="Left" Margin="10 10 0 10" Width="150" />
-        <Button Grid.Row="4" Content="Move Time" Height="Auto" HorizontalAlignment="Right" Margin="0,10,585,10" Click="SubmitMove_Click"/>
-        <Button Grid.Row="4" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="10 10 0 10" Click="ForwardButton_Click" />
-        <TextBox Grid.Row="6" Name="SleepTime_Rotate" Height="Auto" HorizontalAlignment="Left" Margin="10 10 0 10" Width="150" />
-        <Button Grid.Row="6" Content="Rotate Time" Height="Auto" HorizontalAlignment="Right" Margin="0,10,585,10" Click="SubmitRotate_Click"/>
-        <Button Grid.Row="6" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="10 10 0 10" Click="BackwardButton_Click" />
-        <Button Grid.Row="5" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="10 10 200 10" Click="RotateCCW_Click" />
-        <Button Grid.Row="5" Content="RotateCW" Height="Auto" HorizontalAlignment="Center" Margin="10 10 -200 10" Click="RotateCW_Click" />
-        <Button Grid.Row="5" Content="Screenshot" Height="Auto" HorizontalAlignment="Center" Margin="10 10 0 10" Click="ScreenshotButton_Click" />
+        <TextBox Grid.Row="2" Name="SleepTime_Move" Height="Auto" HorizontalAlignment="Left" Margin="10 10 0 10" Width="150" />
+        <Button Grid.Row="2" Content="Move Time" Height="Auto" HorizontalAlignment="Right" Margin="0,10,978,10" Click="SubmitMove_Click"/>
+        <Button Grid.Row="2" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="303,10,856,10" Click="ForwardButton_Click" />
+        <TextBox Grid.Row="2" Name="SleepTime_Rotate" Height="Auto" HorizontalAlignment="Left" Margin="571,10,0,10" Width="150" />
+        <Button Grid.Row="2" Content="Rotate Time" Height="Auto" HorizontalAlignment="Right" Margin="0,10,412,10" Click="SubmitRotate_Click"/>
+        <Button Grid.Row="2" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="485,10,666,10" Click="BackwardButton_Click" />
+        <Button Grid.Row="2" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="233,10,908,10" Click="RotateCCW_Click" />
+        <Button Grid.Row="2" Content="RotateCW" Height="Auto" HorizontalAlignment="Center" Margin="423,10,726,10" Click="RotateCW_Click" />
+        <Button Grid.Row="2" Content="Screenshot" Height="Auto" HorizontalAlignment="Center" Margin="355,10,789,10" Click="ScreenshotButton_Click" />
     </Grid>
 </Window>
