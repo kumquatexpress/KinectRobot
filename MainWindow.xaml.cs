@@ -380,7 +380,7 @@
                     }
                     byteString.Append(depthBytes[i].ToString() + " ");
                 }
-                SaveData(System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-" + time), depthBytes, Encoding.GetEncoding(1251), 5);
+                SaveData(System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-" + time), depthBytes, 8, Encoding.GetEncoding(1251), 5);
                 byteString.Clear();
 
                 var realColors = new byte[(colorBytes.Length * 3) /4];
@@ -398,7 +398,7 @@
                         counter += 1;
                     }
                 }
-                SaveData(System.IO.Path.Combine(myPhotos, "Color-" + this.imageNum + "-" + time), realColors, Encoding.GetEncoding(1251), 6);
+                SaveData(System.IO.Path.Combine(myPhotos, "Color-" + this.imageNum + "-" + time), realColors, 8, Encoding.GetEncoding(1251), 6);
             }
 
             this.imageNum += 1;
@@ -406,17 +406,17 @@
 
         private void DumpPpms()
         {
-            SaveData(GetPpmFilename("Color"), this.colorBytes, Encoding.Default, 6);
-            SaveData(GetPpmFilename("Depth"), this.depthBytes, Encoding.Default, 6);
-            //SaveData(GetPpmFilename("Combined"), this.mappedColor, Encoding.Default, 6);
+            SaveData(GetPpmFilename("Color"), this.colorBytes, 32, Encoding.Default, 7);
+            SaveData(GetPpmFilename("Depth"), this.depthBytes, 16, Encoding.Default, 7);
+            //SaveData(GetPpmFilename("Combined"), this.mappedColor, Encoding.Default, 7);
         }
 
         private string GetPpmFilename(String description)
         {
             return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), description + "-" + this.imageNum + ".ppm");
         }
-
-        private void SaveData(String filename, byte[] data, Encoding encoding, Int32 type)
+        
+        private void SaveData(String filename, byte[] data, int numBits,  Encoding encoding, Int32 type)
         {
             const Int32 bufferSize = 2048;
 
@@ -426,16 +426,15 @@
             {
                 using (var bw = new BinaryWriter(fs))
                 {
-                    bw.Write(encoding.GetBytes(this.GetHeader(type, WIDTH, HEIGHT)));
+                    bw.Write(encoding.GetBytes(this.GetHeader(type, numBits, WIDTH, HEIGHT)));
                     bw.Write(data);
-                }
-                
+                }        
             }
         }
 
-        private String GetHeader(Int32 type, Int32 width, Int32 height)
+        private String GetHeader(Int32 type, int numBits, Int32 width, Int32 height)
         {
-            return String.Format("P{0}\n{1} {2}\n255\n", type, width, height);
+            return String.Format("P{0}\n{1} {2}\n{3}\n", type, width, height, 1 << numBits);
         }
   
         private unsafe void ProcessDepthFrameData(IntPtr depthFrameData, uint depthFrameDataSize, ushort minDepth, ushort maxDepth)
