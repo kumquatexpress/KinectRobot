@@ -38,6 +38,7 @@
         const byte DRIVE = 137;
         const byte CONTROL = 132;
         const byte START = 128;
+        private const int MAX_ROTATIONS = 10;
 
         int MOVE_TIME = 400;
         int ROTATE_TIME = 200;
@@ -62,6 +63,9 @@
         private ushort[] depths = null;
         private DepthSpacePoint[] mappedColor = null;
         private int imageNum = 0;
+        private bool isMoving = false;
+        private bool capturePanorama = false;
+        private int numRotations = 0;
 
         public MainWindow()
         {
@@ -71,7 +75,7 @@
             //open the robot com port
             try
             {
-                this.port = new SerialPort("COM9", 57600, Parity.None, 8, StopBits.One);
+                this.port = new SerialPort("COM5", 57600, Parity.None, 8, StopBits.One);
                 this.TurnOnRoomba();
             }
             catch (Exception)
@@ -126,13 +130,15 @@
             Thread.Sleep(after);
             byte[] send = { DRIVE, 0x00, 0x00, 0x00, 0x00 };
             this.port.Write(send, 0, send.Length);
+            this.isMoving = false;
         }
 
         private void ForwardButton_Click(object sender, RoutedEventArgs e)
         {
             byte[] send = { DRIVE, 0x01, 0xF4, 0x03, 0xE8};
             this.port.Write(send, 0, send.Length);
-            
+            this.isMoving = true;
+
             StopMoving(MOVE_TIME);
         }
 
@@ -140,26 +146,33 @@
         {
             byte[] send = { DRIVE, 0xFE, 0x0C, 0x03, 0xE8};
             this.port.Write(send, 0, send.Length);
+            this.isMoving = true;
 
             StopMoving(MOVE_TIME);
         }
 
         private void RotateCW_Click(object sender, RoutedEventArgs e)
         {
-            byte[] send = { DRIVE, 0xF1, 0xF1, 0x00, 0x00};
-            for (int i = 0; i < 5; i++)
-            {
-                this.port.Write(send, 0, send.Length);
+            this.capturePanorama = true;
+            this.takeScreenshot = true;
+            RotateCW();
+        }
 
-                StopMoving(ROTATE_TIME);
-                Thread.Sleep(300);
-            }
+        private void RotateCW()
+        {
+            byte[] send = { DRIVE, 0xF1, 0xF1, 0x00, 0x00 };
+            this.port.Write(send, 0, send.Length);
+            this.isMoving = true;
+
+            StopMoving(ROTATE_TIME);
+            Thread.Sleep(300);            
         }
 
         private void RotateCCW_Click(object sender, RoutedEventArgs e)
         {
             byte[] send = { DRIVE, 0x01, 0xF0, 0x00, 0x00};
             this.port.Write(send, 0, send.Length);
+            this.isMoving = true;
 
             StopMoving(ROTATE_TIME);
         }
@@ -251,7 +264,7 @@
                             this.colorBitmap.Unlock();
                         }
 
-                        if (takeScreenshot || dumpPpms)
+                        if ((takeScreenshot || dumpPpms) && !isMoving)
                         {
                             ushort[] depths = new ushort[_depthHeight * _depthWidth];
 
@@ -269,11 +282,26 @@
 
                             if (takeScreenshot)
                             {
-                                this.ScreenshotSaveFile();
+                                ScreenshotSaveFile();
                                 takeScreenshot = false;
                             } else if (dumpPpms)
                             {
-                                this.DumpPpms();
+                                ScreenshotSaveFile();
+                                DumpPpms();
+                                dumpPpms = false;
+                            }
+
+                            // Kick off another rotation if capturing a panorama
+                            if (capturePanorama)
+                            {
+                                if (numRotations < MAX_ROTATIONS)
+                                {
+                                    numRotations++;
+                                    RotateCW();
+                                } else
+                                {
+                                    this.capturePanorama = false;
+                                }
                             }
                         }
                         
@@ -434,7 +462,7 @@
 
         private String GetHeader(Int32 type, int numBits, Int32 width, Int32 height)
         {
-            return String.Format("P{0}\n{1} {2}\n{3}\n", type, width, height, 1 << numBits);
+            return String.Format("P{0}\n{1} {2}\n{3}\n", type, width, height, 255);
         }
   
         private unsafe void ProcessDepthFrameData(IntPtr depthFrameData, uint depthFrameDataSize, ushort minDepth, ushort maxDepth)
