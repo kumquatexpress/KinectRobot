@@ -402,7 +402,7 @@
                 encoder.Frames.Add(BitmapFrame.Create(this.depthBitmap));
 
 
-                string path = System.IO.Path.Combine(myPhotos, "Depth-"+this.panoramaNumthis.imageNum+"-"+ time + ".png");
+                string path = System.IO.Path.Combine(myPhotos, "Depth-"+this.panoramaNum + "-" + this.imageNum+"-"+ time + ".png");
 
                 // write the new file to disk
                 try
