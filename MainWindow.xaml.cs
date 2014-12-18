@@ -106,6 +106,8 @@
             // initialize the components (controls) of the window
             this.InitializeComponent();
             this.imageNum = 0;
+
+            
         }
 
         private void TurnOnRoomba()
@@ -127,7 +129,10 @@
          */
         private void StopMoving(int after)
         {
-            Thread.Sleep(after);
+            if (after > 0)
+            {
+                Thread.Sleep(after);
+            }
             byte[] send = { DRIVE, 0x00, 0x00, 0x00, 0x00 };
             this.port.Write(send, 0, send.Length);
             this.isMoving = false;
@@ -135,20 +140,28 @@
 
         private void ForwardButton_Click(object sender, RoutedEventArgs e)
         {
-            byte[] send = { DRIVE, 0x01, 0xF4, 0x03, 0xE8};
-            this.port.Write(send, 0, send.Length);
-            this.isMoving = true;
+            MoveForward();
 
             StopMoving(MOVE_TIME);
         }
 
-        private void BackwardButton_Click(object sender, RoutedEventArgs e)
+        private void MoveForward()
         {
-            byte[] send = { DRIVE, 0xFE, 0x0C, 0x03, 0xE8};
+            byte[] send = { DRIVE, 0x01, 0xF4, 0x03, 0xE8};
             this.port.Write(send, 0, send.Length);
             this.isMoving = true;
+        }
 
+        private void BackwardButton_Click(object sender, RoutedEventArgs e)
+        {
+            MoveBackward();
             StopMoving(MOVE_TIME);
+        }
+
+        private void MoveBackward() {
+            byte[] send = { DRIVE, 0xFE, 0x0C, 0x03, 0xE8 };
+            this.port.Write(send, 0, send.Length);
+            this.isMoving = true;
         }
 
         private void RotateCW_Click(object sender, RoutedEventArgs e)
@@ -156,6 +169,8 @@
             this.capturePanorama = true;
             this.takeScreenshot = true;
             RotateCW();
+            StopMoving(ROTATE_TIME);
+            Thread.Sleep(300);
         }
 
         private void RotateCW()
@@ -163,18 +178,19 @@
             byte[] send = { DRIVE, 0xF1, 0xF1, 0x00, 0x00 };
             this.port.Write(send, 0, send.Length);
             this.isMoving = true;
-
-            StopMoving(ROTATE_TIME);
-            Thread.Sleep(300);            
         }
 
         private void RotateCCW_Click(object sender, RoutedEventArgs e)
         {
-            byte[] send = { DRIVE, 0x01, 0xF0, 0x00, 0x00};
+            RotateCCW();
+            StopMoving(ROTATE_TIME);
+        }
+
+        private void RotateCCW()
+        {
+            byte[] send = { DRIVE, 0x01, 0xF0, 0x00, 0x00 };
             this.port.Write(send, 0, send.Length);
             this.isMoving = true;
-
-            StopMoving(ROTATE_TIME);
         }
 
         private void SubmitMove_Click(object sender, RoutedEventArgs e)
@@ -211,6 +227,30 @@
             {
                 _sensor.Close();
             }
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Left:
+                    RotateCCW();
+                    break;
+                case Key.Right:
+                    RotateCW();
+                    break;
+                case Key.Up:
+                    MoveForward();
+                    break;
+                case Key.Down:
+                    MoveBackward();
+                    break;
+            }
+        }
+
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            StopMoving(0);
         }
 
         void Reader_MultiSourceFrameArrived(object sender, MultiSourceFrameArrivedEventArgs e)
