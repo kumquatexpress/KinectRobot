@@ -38,7 +38,8 @@
         const byte DRIVE = 137;
         const byte CONTROL = 132;
         const byte START = 128;
-        private const int MAX_ROTATIONS = 10;
+        private const int MAX_ROTATIONS = 30;
+        private const int STABILIZE_TIME = 3000;
 
         int MOVE_TIME = 400;
         int ROTATE_TIME = 200;
@@ -62,6 +63,7 @@
         private byte[] colors = null;
         private ushort[] depths = null;
         private DepthSpacePoint[] mappedColor = null;
+        private int panoramaNum = 0;
         private int imageNum = 0;
         private bool isMoving = false;
         private bool capturePanorama = false;
@@ -168,9 +170,9 @@
         {
             this.capturePanorama = true;
             this.takeScreenshot = true;
-            RotateCW();
-            StopMoving(ROTATE_TIME);
-            Thread.Sleep(300);
+            // RotateCW();
+            // StopMoving(ROTATE_TIME);
+            // Thread.Sleep(300);
         }
 
         private void RotateCW()
@@ -188,7 +190,7 @@
 
         private void RotateCCW()
         {
-            byte[] send = { DRIVE, 0x01, 0xF0, 0x00, 0x00 };
+            byte[] send = { DRIVE, 0x01, 0xF4, 0x00, 0x00 };
             this.port.Write(send, 0, send.Length);
             this.isMoving = true;
         }
@@ -323,7 +325,7 @@
                             if (takeScreenshot)
                             {
                                 ScreenshotSaveFile();
-                                takeScreenshot = false;
+                                takeScreenshot = capturePanorama || false;
                             } else if (dumpPpms)
                             {
                                 ScreenshotSaveFile();
@@ -338,9 +340,14 @@
                                 {
                                     numRotations++;
                                     RotateCW();
+                                    StopMoving(ROTATE_TIME);
+                                    Thread.Sleep(STABILIZE_TIME);
+
                                 } else
                                 {
                                     this.capturePanorama = false;
+                                    this.panoramaNum++;
+                                    this.numRotations = 0;
                                 }
                             }
                         }
@@ -395,7 +402,7 @@
                 encoder.Frames.Add(BitmapFrame.Create(this.depthBitmap));
 
 
-                string path = System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-"+ time + ".png");
+                string path = System.IO.Path.Combine(myPhotos, "Depth-"+this.panoramaNumthis.imageNum+"-"+ time + ".png");
 
                 // write the new file to disk
                 try
@@ -421,7 +428,7 @@
 
                 myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
-                path = System.IO.Path.Combine(myPhotos, "Color-"+this.imageNum+"-" + time + ".png");
+                path = System.IO.Path.Combine(myPhotos, "Color-"+this.panoramaNum +"-" + this.imageNum + "-" + time + ".png");
                 // write the new file to disk
                 try
                 {
