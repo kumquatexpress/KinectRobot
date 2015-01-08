@@ -32,19 +32,15 @@
         MultiSourceFrameReader _reader;
         SerialPort port;
 
-        const int WIDTH = 1920;
-        const int HEIGHT = 1080;
-
-        const byte DRIVE = 137;
-        const byte CONTROL = 132;
-        const byte START = 128;
+        private const int WIDTH = 1920;
+        private const int HEIGHT = 1080;
+        private const byte DRIVE = 137;
+        private const byte CONTROL = 132;
+        private const byte START = 128;
         private const int MAX_ROTATIONS = 30;
         private const int STABILIZE_TIME = 3000;
 
-        int MOVE_TIME = 400;
-        int ROTATE_TIME = 200;
-
-        private const int MapDepthToByte = 8000 / 256;
+        private const int MAP_DEPTH_TO_BYTE = 8000 / 256;
 
         private KinectSensor kinectSensor = null;
         private DepthFrameReader depthFrameReader = null;
@@ -53,11 +49,9 @@
         private WriteableBitmap colorBitmap = null;
         private FrameDescription colorFrameDescription = null;
         private CoordinateMapper cm = null;
-
         private byte[] depthPixels = null;
         private byte[] depthBytes = null;
         private byte[] colorBytes = null;
-
         private bool takeScreenshot = false;
         private bool dumpPpms = false;
         private byte[] colors = null;
@@ -68,6 +62,8 @@
         private bool isMoving = false;
         private bool capturePanorama = false;
         private int numRotations = 0;
+        private int moveTime = 400;
+        private int rotateTime = 200;
 
         public MainWindow()
         {
@@ -144,7 +140,7 @@
         {
             MoveForward();
 
-            StopMoving(MOVE_TIME);
+            StopMoving(moveTime);
         }
 
         private void MoveForward()
@@ -157,7 +153,7 @@
         private void BackwardButton_Click(object sender, RoutedEventArgs e)
         {
             MoveBackward();
-            StopMoving(MOVE_TIME);
+            StopMoving(moveTime);
         }
 
         private void MoveBackward() {
@@ -171,7 +167,7 @@
             this.capturePanorama = true;
             this.takeScreenshot = true;
             // RotateCW();
-            // StopMoving(ROTATE_TIME);
+            // StopMoving(rotateTime);
             // Thread.Sleep(300);
         }
 
@@ -185,7 +181,7 @@
         private void RotateCCW_Click(object sender, RoutedEventArgs e)
         {
             RotateCCW();
-            StopMoving(ROTATE_TIME);
+            StopMoving(rotateTime);
         }
 
         private void RotateCCW()
@@ -197,12 +193,12 @@
 
         private void SubmitMove_Click(object sender, RoutedEventArgs e)
         {
-            MOVE_TIME = Convert.ToInt32(this.SleepTime_Move.Text);
+            moveTime = Convert.ToInt32(this.SleepTime_Move.Text);
         }
 
         private void SubmitRotate_Click(object sender, RoutedEventArgs e)
         {
-            ROTATE_TIME = Convert.ToInt32(this.SleepTime_Rotate.Text);
+            rotateTime = Convert.ToInt32(this.SleepTime_Rotate.Text);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -340,7 +336,7 @@
                                 {
                                     numRotations++;
                                     RotateCW();
-                                    StopMoving(ROTATE_TIME);
+                                    StopMoving(rotateTime);
                                     Thread.Sleep(STABILIZE_TIME);
 
                                 } else
@@ -383,7 +379,7 @@
                 {
                     var depthPix = (int)(depthPoint.Y * this.depthFrameDescription.Width + depthPoint.X);
                     var depth = this.depths[depthPix];
-                    mDepth[i] = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MapDepthToByte) : 0);
+                    mDepth[i] = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MAP_DEPTH_TO_BYTE) : 0);
                 }
             }
 
@@ -525,7 +521,7 @@
 
                 // To convert to a byte, we're mapping the depth value to the byte range.
                 // Values outside the reliable depth range are mapped to 0 (black).
-                this.depthPixels[i] = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MapDepthToByte) : 0);
+                this.depthPixels[i] = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MAP_DEPTH_TO_BYTE) : 0);
             }
         }
 
