@@ -49,7 +49,7 @@
         private WriteableBitmap colorBitmap = null;
         private FrameDescription colorFrameDescription = null;
         private CoordinateMapper cm = null;
-        private byte[] depthPixels = null;
+        private ushort[] depthPixels = null;
         private byte[] depthBytes = null;
         private byte[] colorBytes = null;
         private bool takeScreenshot = false;
@@ -88,10 +88,10 @@
             this.colorFrameDescription = this.kinectSensor.ColorFrameSource.CreateFrameDescription(ColorImageFormat.Bgra);
 
             // allocate space to put the pixels being received and converted
-            this.depthPixels = new byte[this.depthFrameDescription.Width * this.depthFrameDescription.Height];
+            this.depthPixels = new ushort[this.depthFrameDescription.Width * this.depthFrameDescription.Height];
 
             // create the bitmap to display
-            this.depthBitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Gray8, null);
+            this.depthBitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Gray16, null);
             this.colorBitmap = new WriteableBitmap(this.colorFrameDescription.Width, this.colorFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgr32, null);
 
             // open the sensor
@@ -520,7 +520,7 @@
 
                 // To convert to a byte, we're mapping the depth value to the byte range.
                 // Values outside the reliable depth range are mapped to 0 (black).
-                this.depthPixels[i] = (byte)(depth >= minDepth && depth <= maxDepth ? (depth / MAP_DEPTH_TO_BYTE) : 0);
+                this.depthPixels[i] = (ushort)(depth >= minDepth && depth <= maxDepth ? depth : 0);
             }
         }
 
@@ -529,7 +529,7 @@
             this.depthBitmap.WritePixels(
                 new Int32Rect(0, 0, this.depthBitmap.PixelWidth, this.depthBitmap.PixelHeight),
                 this.depthPixels,
-                this.depthBitmap.PixelWidth,
+                2 * this.depthBitmap.PixelWidth,
                 0);
         }
     }
