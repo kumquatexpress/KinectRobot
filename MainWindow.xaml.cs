@@ -38,7 +38,7 @@
         private const byte CONTROL = 132;
         private const byte START = 128;
         private const int MAX_ROTATIONS = 30;
-        private const int STABILIZE_TIME = 3000;
+        private const int STABILIZE_TIME = 2000;
 
         private const int MAP_DEPTH_TO_BYTE = 8000 / 256;
 
@@ -241,16 +241,6 @@
             this.isMoving = true;
         }
 
-        private void SubmitMove_Click(object sender, RoutedEventArgs e)
-        {
-            moveTime = Convert.ToInt32(this.SleepTime_Move.Text);
-        }
-
-        private void SubmitRotate_Click(object sender, RoutedEventArgs e)
-        {
-            rotateTime = Convert.ToInt32(this.SleepTime_Rotate.Text);
-        }
-
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             _sensor = KinectSensor.GetDefault();
@@ -394,6 +384,7 @@
                                     this.capturePanorama = false;
                                     this.takeScreenshot = false;
                                     this.panoramaNum++;
+                                    this.imageNum = 0;
                                     this.numRotations = 0;
                                 }
                             }
@@ -529,12 +520,16 @@
         {
             // depth frame data is a 16 bit value
             ushort* frameData = (ushort*)depthFrameData;
+            ushort depthScale = 8;
+            minDepth *= depthScale;
+            maxDepth *= depthScale;
 
             // convert depth to a visual representation
             for (int i = 0; i < (int)(depthFrameDataSize / this.depthFrameDescription.BytesPerPixel); ++i)
             {
-                // Get the depth for this pixel
+                // Get the depth for this pixel (scale up by 8 to increase contrast)
                 ushort depth = frameData[i];
+                depth *= depthScale;
 
                 // To convert to a byte, we're mapping the depth value to the byte range.
                 // Values outside the reliable depth range are mapped to 0 (black).
