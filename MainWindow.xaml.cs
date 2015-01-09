@@ -108,18 +108,22 @@
             
         }
 
+        private void SendToRoomba(byte[] bytes)
+        {
+            this.port.Write(bytes, 0, bytes.Length);
+        }
+
         private void TurnOnRoomba()
         {
-            byte[] send = { START, CONTROL };
             this.port.ReadTimeout = 10;
             this.port.WriteTimeout = 1000;
             this.port.Open();
 
-            this.port.Write(send, 0, send.Length);
+            SendToRoomba(new byte[] {START, CONTROL});
             //makes it play a song to verify it's on
-            this.port.Write(new byte[] { 139, 25, 0, 128 }, 0, 4);
-            this.port.Write(new byte[] { 140, 1, 1, 48, 20 }, 0, 5);
-            this.port.Write(new byte[] { 141, 1 }, 0, 2);
+            SendToRoomba(new byte[] { 139, 25, 0, 128 });
+            SendToRoomba(new byte[] { 140, 1, 1, 48, 20 });
+            SendToRoomba(new byte[] { 141, 1 });
         }
 
         /*
@@ -131,8 +135,7 @@
             {
                 Thread.Sleep(after);
             }
-            byte[] send = { DRIVE, 0x00, 0x00, 0x00, 0x00 };
-            this.port.Write(send, 0, send.Length);
+            SendToRoomba(new byte[]{ DRIVE, 0x00, 0x00, 0x00, 0x00 });
             this.isMoving = false;
         }
 
@@ -145,8 +148,7 @@
 
         private void MoveForward()
         {
-            byte[] send = { DRIVE, 0x01, 0xF4, 0x03, 0xE8};
-            this.port.Write(send, 0, send.Length);
+            SendToRoomba(new byte[] { DRIVE, 0x01, 0xF4, 0x03, 0xE8});
             this.isMoving = true;
         }
 
@@ -157,8 +159,7 @@
         }
 
         private void MoveBackward() {
-            byte[] send = { DRIVE, 0xFE, 0x0C, 0x03, 0xE8 };
-            this.port.Write(send, 0, send.Length);
+            SendToRoomba(new byte[] { DRIVE, 0xFE, 0x0C, 0x03, 0xE8 });
             this.isMoving = true;
         }
 
@@ -173,8 +174,7 @@
 
         private void RotateCW()
         {
-            byte[] send = { DRIVE, 0xF1, 0xF1, 0x00, 0x00 };
-            this.port.Write(send, 0, send.Length);
+            SendToRoomba(new byte[] { DRIVE, 0xF1, 0xF1, 0x00, 0x00 });
             this.isMoving = true;
         }
 
@@ -186,8 +186,7 @@
 
         private void RotateCCW()
         {
-            byte[] send = { DRIVE, 0x01, 0xF4, 0x00, 0x00 };
-            this.port.Write(send, 0, send.Length);
+            SendToRoomba(new byte[] { DRIVE, 0x01, 0xF4, 0x00, 0x00 });
             this.isMoving = true;
         }
 
