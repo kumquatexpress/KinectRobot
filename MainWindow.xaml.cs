@@ -73,7 +73,7 @@
             //open the robot com port
             try
             {
-                this.port = new SerialPort("COM5", 57600, Parity.None, 8, StopBits.One);
+                this.port = new SerialPort("COM9", 57600, Parity.None, 8, StopBits.One);
                 this.TurnOnRoomba();
             }
             catch (Exception)
@@ -105,7 +105,54 @@
             this.InitializeComponent();
             this.imageNum = 0;
 
-            
+            Console.Write(kinectSensor.ColorFrameSource.FrameDescription.Width);
+            Console.Write("x");
+            Console.WriteLine(kinectSensor.ColorFrameSource.FrameDescription.Height);
+            Console.Write(kinectSensor.ColorFrameSource.FrameDescription.HorizontalFieldOfView);
+            Console.Write("x");
+            Console.WriteLine(kinectSensor.ColorFrameSource.FrameDescription.VerticalFieldOfView);
+
+            Console.WriteLine("Depth: " +
+                kinectSensor.DepthFrameSource.FrameDescription.Width + " x " +
+                kinectSensor.DepthFrameSource.FrameDescription.Height);
+            Console.WriteLine("Depth FoV: " +
+                kinectSensor.DepthFrameSource.FrameDescription.HorizontalFieldOfView + " x " +
+                kinectSensor.DepthFrameSource.FrameDescription.VerticalFieldOfView);
+
+            while (true)
+            {
+                CameraIntrinsics ci = kinectSensor.CoordinateMapper.GetDepthCameraIntrinsics();
+                if (ci.FocalLengthX == 0)
+                {
+                    Thread.Sleep(1000);
+                }
+                else
+                {
+                    Console.Write("Center: ");
+                    Console.Write(ci.PrincipalPointX);
+                    Console.Write(", ");
+                    Console.WriteLine(ci.PrincipalPointY);
+
+                    Console.WriteLine("Focal lengths " + ci.FocalLengthX.ToString() + " x " + ci.FocalLengthY.ToString());
+                    Console.WriteLine("Distortion (2nd, 4th, 6th orders)" +
+                        ci.RadialDistortionSecondOrder + " " +
+                        ci.RadialDistortionFourthOrder + " " +
+                        ci.RadialDistortionSixthOrder);
+
+                    FileStream fs = new FileStream("Depth2Color.bin", FileMode.Create);
+                    BinaryWriter bw = new BinaryWriter(fs);
+                    PointF[] depth2Color = kinectSensor.CoordinateMapper.GetDepthFrameToCameraSpaceTable();
+                    for (int i = 0; i < depth2Color.Length; i++)
+                    {
+                        bw.Write(depth2Color[i].X);
+                        bw.Write(depth2Color[i].Y);
+                    }
+                    bw.Close();
+                    fs.Close();
+
+                    break;
+                }
+            }
         }
 
         private void SendToRoomba(byte[] bytes)
@@ -165,11 +212,15 @@
 
         private void RotateCW_Click(object sender, RoutedEventArgs e)
         {
+            RotateCW();
+            StopMoving(rotateTime);
+            Thread.Sleep(300);
+        }
+
+        private void CapturePanoramas_Click(object sender, RoutedEventArgs e)
+        {
             this.capturePanorama = true;
             this.takeScreenshot = true;
-            // RotateCW();
-            // StopMoving(rotateTime);
-            // Thread.Sleep(300);
         }
 
         private void RotateCW()
