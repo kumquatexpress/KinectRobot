@@ -19,10 +19,10 @@
         <Viewbox Grid.Row="1" HorizontalAlignment="Right">
             <Image Name="depthCamera" Width="480" Height="270" Stretch="UniformToFill"/>
         </Viewbox>
-        <TextBox Grid.Row="2" Name="SleepTime_Move" Height="Auto" HorizontalAlignment="Left" Margin="10 10 0 10" Width="150" />
+        <TextBox Grid.Row="2" Name="SleepTime_Move" Height="Auto" HorizontalAlignment="Left" Margin="10 10 0 10" Width="150" Focusable="False" />
         <Button Grid.Row="2" Content="Move Time" Height="Auto" HorizontalAlignment="Right" Margin="0,10,978,10" Click="SubmitMove_Click"/>
         <Button Grid.Row="2" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="385,10,764,10" Click="ForwardButton_Click" Width="57" />
-        <TextBox Grid.Row="2" Name="SleepTime_Rotate" Height="Auto" HorizontalAlignment="Left" Margin="642,10,0,10" Width="110" />
+        <TextBox Grid.Row="2" Name="SleepTime_Rotate" Height="Auto" HorizontalAlignment="Left" Margin="642,10,0,10" Width="110" Focusable="False" />
         <Button Grid.Row="2" Content="Rotate Time" Height="Auto" HorizontalAlignment="Right" Margin="0,10,381,10" Click="SubmitRotate_Click"/>
         <Button Grid.Row="2" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="447,10,689,10" Click="BackwardButton_Click" Width="70" />
         <Button Grid.Row="2" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="233,10,899,10" Click="RotateCCW_Click" Width="74" />
