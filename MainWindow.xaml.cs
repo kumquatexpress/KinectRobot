@@ -375,7 +375,7 @@
                             } else if (dumpPpms)
                             {
                                 ScreenshotSaveFile();
-                                DumpPpms();
+                                //DumpPpms();
                                 dumpPpms = false;
                             }
 
@@ -392,6 +392,7 @@
                                 } else
                                 {
                                     this.capturePanorama = false;
+                                    this.takeScreenshot = false;
                                     this.panoramaNum++;
                                     this.numRotations = 0;
                                 }
@@ -436,7 +437,6 @@
             this.depthBytes = mDepth;
             this.colorBytes = this.colors;
 
-            string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
             string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
             if (this.depthBitmap != null && this.colorBitmap != null)
@@ -448,7 +448,7 @@
                 encoder.Frames.Add(BitmapFrame.Create(this.depthBitmap));
 
 
-                string path = System.IO.Path.Combine(myPhotos, "Depth-"+this.panoramaNum + "-" + this.imageNum+"-"+ time + ".png");
+                string path = System.IO.Path.Combine(myPhotos, "Depth-" + this.panoramaNum + "-" + this.imageNum + ".png");
 
                 // write the new file to disk
                 try
@@ -470,11 +470,9 @@
                 // create frame from the writable bitmap and add to encoder
                 encoder.Frames.Add(BitmapFrame.Create(this.colorBitmap));
 
-                time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
-
                 myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
-                path = System.IO.Path.Combine(myPhotos, "Color-"+this.panoramaNum +"-" + this.imageNum + "-" + time + ".png");
+                path = System.IO.Path.Combine(myPhotos, "Color-" + this.panoramaNum + "-" + this.imageNum + ".png");
                 // write the new file to disk
                 try
                 {
@@ -489,37 +487,6 @@
                 {
 
                 }
-            }
-
-            if (this.depthBytes != null && this.colorBytes != null)
-            {
-                StringBuilder byteString = new StringBuilder();
-                for(int i = 0; i < depthBytes.Length; i++){
-                    if ((i+1) % WIDTH == 0)
-                    {
-                        byteString.Append("\n");
-                    }
-                    byteString.Append(depthBytes[i].ToString() + " ");
-                }
-                SaveData(System.IO.Path.Combine(myPhotos, "Depth-"+this.imageNum+"-" + time), depthBytes, 8, Encoding.GetEncoding(1251), 5);
-                byteString.Clear();
-
-                var realColors = new byte[(colorBytes.Length * 3) /4];
-                var counter = 0;
-                for (int i = 0; i < colorBytes.Length; i++)
-                {
-                    if ((i+1) % WIDTH == 0)
-                    {
-                        byteString.Append("\n");
-                    }
-                    if (i % 4 != 3)
-                    {
-                        byteString.Append(colorBytes[i].ToString() + " ");
-                        realColors[counter] = colorBytes[i];
-                        counter += 1;
-                    }
-                }
-                SaveData(System.IO.Path.Combine(myPhotos, "Color-" + this.imageNum + "-" + time), realColors, 8, Encoding.GetEncoding(1251), 6);
             }
 
             this.imageNum += 1;
@@ -541,8 +508,8 @@
         {
             const Int32 bufferSize = 2048;
 
-            if (System.IO.Path.GetExtension(filename).ToLower() != ".ppm")
-                filename += ".ppm";
+            //if (System.IO.Path.GetExtension(filename).ToLower() != ".ppm")
+            //    filename += ".ppm";
             using (var fs = new FileStream(filename, FileMode.Create, FileAccess.ReadWrite, FileShare.None, bufferSize))
             {
                 using (var bw = new BinaryWriter(fs))
