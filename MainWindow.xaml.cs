@@ -439,7 +439,7 @@
                 encoder.Frames.Add(BitmapFrame.Create(this.depthBitmap));
 
 
-                string path = System.IO.Path.Combine(myPhotos, "Depth-" + this.panoramaNum + "-" + this.imageNum + ".png");
+                string path = System.IO.Path.Combine(myPhotos, String.Format("Depth-{0:d3}-{1:d3}.png", this.panoramaNum, this.imageNum));
 
                 // write the new file to disk
                 try
@@ -463,7 +463,7 @@
 
                 myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
-                path = System.IO.Path.Combine(myPhotos, "Color-" + this.panoramaNum + "-" + this.imageNum + ".png");
+                path = System.IO.Path.Combine(myPhotos, String.Format("Color-{0:d3}-{1:d3}.png", this.panoramaNum, this.imageNum));
                 // write the new file to disk
                 try
                 {
