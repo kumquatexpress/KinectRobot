@@ -23,6 +23,8 @@
     using System.Windows.Shapes;
     using System.IO.Ports;
 
+	using Robot;
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -42,6 +44,7 @@
 
         private const int MAP_DEPTH_TO_BYTE = 8000 / 256;
 
+		private RobotController robot;
         private KinectSensor kinectSensor = null;
         private DepthFrameReader depthFrameReader = null;
         private FrameDescription depthFrameDescription = null;
@@ -59,7 +62,6 @@
         private DepthSpacePoint[] mappedColor = null;
         private int panoramaNum = 0;
         private int imageNum = 0;
-        private bool isMoving = false;
         private bool capturePanorama = false;
         private int numRotations = 0;
         private int moveTime = 400;
@@ -70,16 +72,7 @@
             // get the kinectSensor object
             this.kinectSensor = KinectSensor.GetDefault();
 
-            //open the robot com port
-            try
-            {
-                this.port = new SerialPort("COM9", 57600, Parity.None, 8, StopBits.One);
-                this.TurnOnRoomba();
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Robot not detected, unable to turn on");
-            }
+			this.robot = new RobotController("COM9");
             // open the reader for the depth frames
             this.depthFrameReader = this.kinectSensor.DepthFrameSource.OpenReader();
 
@@ -155,24 +148,6 @@
             }
         }
 
-        private void SendToRoomba(byte[] bytes)
-        {
-            this.port.Write(bytes, 0, bytes.Length);
-        }
-
-        private void TurnOnRoomba()
-        {
-            this.port.ReadTimeout = 10;
-            this.port.WriteTimeout = 1000;
-            this.port.Open();
-
-            SendToRoomba(new byte[] {START, CONTROL});
-            //makes it play a song to verify it's on
-            SendToRoomba(new byte[] { 139, 25, 0, 128 });
-            SendToRoomba(new byte[] { 140, 1, 1, 48, 20 });
-            SendToRoomba(new byte[] { 141, 1 });
-        }
-
         /*
          * Stops moving after a given amount of milliseconds
          */
@@ -182,39 +157,25 @@
             {
                 Thread.Sleep(after);
             }
-            SendToRoomba(new byte[]{ DRIVE, 0x00, 0x00, 0x00, 0x00 });
-            this.isMoving = false;
+			robot.StopMoving();
         }
 
         private void ForwardButton_Click(object sender, RoutedEventArgs e)
         {
-            MoveForward();
-
+			robot.MoveForward();
             StopMoving(moveTime);
-        }
-
-        private void MoveForward()
-        {
-            SendToRoomba(new byte[] { DRIVE, 0x01, 0xF4, 0x03, 0xE8});
-            this.isMoving = true;
         }
 
         private void BackwardButton_Click(object sender, RoutedEventArgs e)
         {
-            MoveBackward();
+			robot.MoveBackward();
             StopMoving(moveTime);
-        }
-
-        private void MoveBackward() {
-            SendToRoomba(new byte[] { DRIVE, 0xFE, 0x0C, 0x03, 0xE8 });
-            this.isMoving = true;
         }
 
         private void RotateCW_Click(object sender, RoutedEventArgs e)
         {
-            RotateCW();
+			robot.MoveClockwise();
             StopMoving(rotateTime);
-            Thread.Sleep(300);
         }
 
         private void CapturePanoramas_Click(object sender, RoutedEventArgs e)
@@ -225,21 +186,19 @@
 
         private void RotateCW()
         {
-            SendToRoomba(new byte[] { DRIVE, 0xF1, 0xF1, 0x00, 0x00 });
-            this.isMoving = true;
+			robot.MoveCounterclockwise();
         }
 
         private void RotateCCW_Click(object sender, RoutedEventArgs e)
         {
-            RotateCCW();
+			robot.MoveCounterclockwise();
             StopMoving(rotateTime);
         }
 
         private void RotateCCW()
         {
-            SendToRoomba(new byte[] { DRIVE, 0x01, 0xF4, 0x00, 0x00 });
-            this.isMoving = true;
-        }
+			robot.MoveCounterclockwise();
+		}
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -272,16 +231,16 @@
             switch (e.Key)
             {
                 case Key.Left:
-                    RotateCCW();
+                    robot.RotateCounterclockwise();
                     break;
                 case Key.Right:
-                    RotateCW();
+					robot.RotateClockwise();
                     break;
                 case Key.Up:
-                    MoveForward();
+				    robot.MoveForward();
                     break;
                 case Key.Down:
-                    MoveBackward();
+				    robot.MoveBackward();
                     break;
             }
         }
@@ -342,7 +301,7 @@
                             this.colorBitmap.Unlock();
                         }
 
-                        if ((takeScreenshot || dumpPpms) && !isMoving)
+                        if ((takeScreenshot || dumpPpms) && !robot.IsMoving)
                         {
                             ushort[] depths = new ushort[_depthHeight * _depthWidth];
 
