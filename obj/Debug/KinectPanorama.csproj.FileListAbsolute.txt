@@ -1,2 +1,0 @@
-E:\KinectSamples\DepthBasics-WPF\bin\AnyCPU\Debug\DepthBasics-WPF.exe.config
-E:\KinectSamples\DepthBasics-WPF\bin\AnyCPU\Debug\KinectPanorama.exe.config

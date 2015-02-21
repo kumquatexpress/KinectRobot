@@ -18,7 +18,13 @@
 		{	
 			this.isMoving = false;
 			this.serialPort = new SerialPort(comPort, BAUD_RATE, Parity.None, 8, StopBits.One);
-			initializeSerialPort();
+            try
+            {
+                initializeSerialPort();
+            } catch (Exception e) {
+                Console.WriteLine(e.Message);
+                Console.WriteLine("Starting without robot");
+            }
 		}
 
 		public void MoveForward()
@@ -27,6 +33,11 @@
 			sendBytes(DRIVE_COMMAND, 0x01, 0xF4, 0x03, 0xE8);
 			this.isMoving = true;
 		}
+
+        public Boolean IsMoving()
+        {
+            return this.isMoving;
+        }
 
 		public void MoveBackward()
 		{
@@ -56,7 +67,7 @@
 		{
 			serialPort.ReadTimeout = READ_TIMEOUT;
 			serialPort.WriteTimeout = WRITE_TIMEOUT;
-			serialPort.Open();		
+			serialPort.Open();
 		}
 
 		private void initializeRobot()

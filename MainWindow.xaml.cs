@@ -115,7 +115,7 @@
             while (true)
             {
                 CameraIntrinsics ci = kinectSensor.CoordinateMapper.GetDepthCameraIntrinsics();
-                if (ci.FocalLengthX == 0)
+                if (ci.FocalLengthX == 0 && kinectSensor.IsAvailable)
                 {
                     Thread.Sleep(1000);
                 }
@@ -174,7 +174,7 @@
 
         private void RotateCW_Click(object sender, RoutedEventArgs e)
         {
-			robot.MoveClockwise();
+			robot.RotateClockwise();
             StopMoving(rotateTime);
         }
 
@@ -186,18 +186,18 @@
 
         private void RotateCW()
         {
-			robot.MoveCounterclockwise();
+			robot.RotateCounterclockwise();
         }
 
         private void RotateCCW_Click(object sender, RoutedEventArgs e)
         {
-			robot.MoveCounterclockwise();
+			robot.RotateCounterclockwise();
             StopMoving(rotateTime);
         }
 
         private void RotateCCW()
         {
-			robot.MoveCounterclockwise();
+			robot.RotateCounterclockwise();
 		}
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -301,7 +301,7 @@
                             this.colorBitmap.Unlock();
                         }
 
-                        if ((takeScreenshot || dumpPpms) && !robot.IsMoving)
+                        if ((takeScreenshot || dumpPpms) && !robot.IsMoving())
                         {
                             ushort[] depths = new ushort[_depthHeight * _depthWidth];
 
