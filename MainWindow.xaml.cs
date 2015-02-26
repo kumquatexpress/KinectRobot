@@ -24,6 +24,7 @@
     using System.IO.Ports;
 
 	using Robot;
+    using Kinect;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -45,6 +46,7 @@
         private const int MAP_DEPTH_TO_BYTE = 8000 / 256;
 
 		private RobotController robot;
+        private KinectReader kinect;
         private KinectSensor kinectSensor = null;
         private DepthFrameReader depthFrameReader = null;
         private FrameDescription depthFrameDescription = null;
@@ -86,6 +88,8 @@
             // create the bitmap to display
             this.depthBitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Gray16, null);
             this.colorBitmap = new WriteableBitmap(this.colorFrameDescription.Width, this.colorFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgr32, null);
+
+            // this.kinect = new KinectReader(depthBitmap, colorBitmap);
 
             // open the sensor
             this.kinectSensor.Open();
@@ -495,7 +499,7 @@
                 this.depthPixels[i] = (ushort)(depth >= minDepth && depth <= maxDepth ? depth : 0);
             }
         }
-
+        
         private void RenderDepthPixels()
         {
             this.depthBitmap.WritePixels(
