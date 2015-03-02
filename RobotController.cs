@@ -21,6 +21,7 @@
             try
             {
                 initializeSerialPort();
+                initializeRobot();
             } catch (Exception e) {
                 Console.WriteLine(e.Message);
                 Console.WriteLine("Starting without robot");

@@ -1,3 +1,6 @@
 *.exe
 bin
 obj
+*.psess
+*.suo
+*.vsp

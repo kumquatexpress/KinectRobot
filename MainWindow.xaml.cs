@@ -88,8 +88,7 @@
             // create the bitmap to display
             this.depthBitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Gray16, null);
             this.colorBitmap = new WriteableBitmap(this.colorFrameDescription.Width, this.colorFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgr32, null);
-
-            // this.kinect = new KinectReader(depthBitmap, colorBitmap);
+            this.kinect = new KinectReader(depthBitmap, colorBitmap);
 
             // open the sensor
             this.kinectSensor.Open();
@@ -214,6 +213,8 @@
 
                 _reader = _sensor.OpenMultiSourceFrameReader(FrameSourceTypes.Color | FrameSourceTypes.Depth);
                 _reader.MultiSourceFrameArrived += Reader_MultiSourceFrameArrived;
+                depthCamera.Source = this.depthBitmap;
+                colorCamera.Source = this.colorBitmap;
             }
         }
 

@@ -33,39 +33,40 @@ namespace Kinect {
             var reference = e.FrameReference.AcquireFrame();
             using (var colorFrame = reference.ColorFrameReference.AcquireFrame())
             {
-                using (var colorBuffer = colorFrame.LockRawImageBuffer())
+                using (var depthFrame = reference.DepthFrameReference.AcquireFrame())
                 {
                     var description = sensor.ColorFrameSource.CreateFrameDescription(ColorImageFormat.Bgra);
-                    if (IsSameSize(description, colorBitmap))
+                    if (colorFrame != null && IsSameSize(description, colorBitmap) && depthFrame != null &&
+                        IsSameSize(sensor.DepthFrameSource.FrameDescription, depthBitmap))
                     {
-                        colorBitmap.Lock();
-                        colorFrame.CopyConvertedFrameDataToIntPtr(
-                            colorBitmap.BackBuffer,
-                            (uint)(description.Width * description.Height * 4),
-                            ColorImageFormat.Bgra);
-                        colorBitmap.AddDirtyRect(new Int32Rect(0, 0, colorBitmap.PixelWidth, colorBitmap.PixelHeight));
-                        colorBitmap.Unlock();
-                    }
-                }
-            }
-
-            using (var depthFrame = reference.DepthFrameReference.AcquireFrame())
-            {
-                var description = sensor.DepthFrameSource.FrameDescription;
-                if (IsSameSize(description, depthBitmap))
-                {
-                    using (var depthBuffer = depthFrame.LockImageBuffer())
-                    {
-                        if (depthPixels == null)
+                        using (var colorBuffer = colorFrame.LockRawImageBuffer())
                         {
-                            this.depthPixels = new ushort[description.Height * description.Width];
+                            colorBitmap.Lock();
+                            colorFrame.CopyConvertedFrameDataToIntPtr(
+                                colorBitmap.BackBuffer,
+                                (uint)(description.Width * description.Height * 4),
+                                ColorImageFormat.Bgra);
+                            colorBitmap.AddDirtyRect(new Int32Rect(0, 0, colorBitmap.PixelWidth, colorBitmap.PixelHeight));
+                            colorBitmap.Unlock();
+
                         }
-                        ProcessDepthFrameData(depthBuffer, depthFrame, depthPixels);
-                        depthBitmap.WritePixels(
-                            new Int32Rect(0, 0, depthBitmap.PixelWidth, depthBitmap.PixelHeight),
-                            depthPixels,
-                            2 * depthBitmap.PixelWidth,
-                            0);
+
+
+                        description = sensor.DepthFrameSource.FrameDescription;
+
+                        using (var depthBuffer = depthFrame.LockImageBuffer())
+                        {
+                            if (depthPixels == null)
+                            {
+                                this.depthPixels = new ushort[description.Height * description.Width];
+                            }
+                            ProcessDepthFrameData(depthBuffer, depthFrame);
+                            depthBitmap.WritePixels(
+                                new Int32Rect(0, 0, depthBitmap.PixelWidth, depthBitmap.PixelHeight),
+                                depthPixels,
+                                2 * depthBitmap.PixelWidth,
+                                0);
+                        }
                     }
                 }
             }
@@ -76,16 +77,18 @@ namespace Kinect {
             return description.Width == bitmap.PixelWidth && description.Height == bitmap.PixelHeight;
         }
 
-        private static unsafe void ProcessDepthFrameData(KinectBuffer buffer, DepthFrame depthFrame, ushort[] pixels)
+        private unsafe void ProcessDepthFrameData(KinectBuffer buffer, DepthFrame depthFrame)
         {
             ushort* frameData = (ushort*)buffer.UnderlyingBuffer;
             ushort minDepth = (ushort)(depthFrame.DepthMinReliableDistance * DEPTH_SCALE);
             ushort maxDepth = (ushort)(depthFrame.DepthMaxReliableDistance * DEPTH_SCALE);
 
-            for (int i = 0; i < (int)(buffer.Size / depthFrame.FrameDescription.BytesPerPixel); i++)
+            int maxCounter = (int)(buffer.Size / depthFrame.FrameDescription.BytesPerPixel);
+            for (int i = 0; i < maxCounter; ++i)
             {
-                ushort depth = (ushort)(frameData[i] * DEPTH_SCALE);
-                pixels[i] = depth >= minDepth && depth <= maxDepth ? depth : (ushort)0;
+                ushort depth = frameData[i];
+                depth *= DEPTH_SCALE;
+                depthPixels[i] = (ushort)(depth >= minDepth && depth <= maxDepth ? depth : 0);
             }
         }
     }
