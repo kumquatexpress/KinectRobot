@@ -185,6 +185,30 @@
         {
             this.capturePanorama = true;
             this.takeScreenshot = true;
+            this.numRotations = 0;
+            this.imageNum = 0;
+
+            while (true)
+            {
+                if (takeScreenshot)
+                {
+                    kinect.TakeScreenShot(String.Format("{0:d3}-{1:d3}", this.panoramaNum, this.imageNum));
+
+                    if (numRotations < MAX_ROTATIONS)
+                    {
+                        numRotations++;
+                        robot.RotateClockwise();
+                        StopMoving(rotateTime);
+                        Thread.Sleep(STABILIZE_TIME);
+                        this.takeScreenshot = true;
+                    }
+                    this.imageNum += 1;
+                }
+
+            }
+            this.capturePanorama = false;
+            this.takeScreenshot = false;
+            this.panoramaNum += 1;              
         }
 
         private void RotateCW()
@@ -205,17 +229,8 @@
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            _sensor = KinectSensor.GetDefault();
-
-            if (_sensor != null)
-            {
-                _sensor.Open();
-
-                _reader = _sensor.OpenMultiSourceFrameReader(FrameSourceTypes.Color | FrameSourceTypes.Depth);
-                _reader.MultiSourceFrameArrived += Reader_MultiSourceFrameArrived;
-                depthCamera.Source = this.depthBitmap;
-                colorCamera.Source = this.colorBitmap;
-            }
+                depthCamera.Source = this.kinect.depthBitmap;
+                colorCamera.Source = this.kinect.colorBitmap;
         }
 
         private void Window_Closed(object sender, EventArgs e)
