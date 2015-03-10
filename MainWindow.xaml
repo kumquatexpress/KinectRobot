@@ -1,12 +1,13 @@
 ﻿<Window x:Class="KinectCoordinateMapping.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="440" Width="1205.97"
+        Title="MainWindow" Height="710" Width="1205.97"
         Loaded="Window_Loaded" Closed="Window_Closed"
         KeyUp="Window_KeyUp" KeyDown="Window_KeyDown">
-    <Grid Margin="0,0,-8,0" Height="400" VerticalAlignment="Bottom">
+    <Grid Margin="0,0,-8,0" Height="670" VerticalAlignment="Bottom">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition Height="270"></RowDefinition>
             <RowDefinition Height="270"></RowDefinition>
             <RowDefinition Height="100"></RowDefinition>
         </Grid.RowDefinitions>
@@ -22,10 +23,10 @@
         <Viewbox Grid.Row="2" HorizontalAlignment="Center">
             <Image Name="infraCamera" Width="480" Height="270" Stretch="UniformToFill"/>
         </Viewbox>
-        <Button Grid.Row="3" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="385,10,764,10" Click="ForwardButton_Click" Width="57" />
-        <Button Grid.Row="3" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="447,10,689,10" Click="BackwardButton_Click" Width="70" />
-        <Button Grid.Row="3" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="233,10,899,10" Click="RotateCCW_Click" Width="74" />
-        <Button Grid.Row="3" Content="RotateCW" Height="Auto" HorizontalAlignment="Center" Margin="312,10,826,10" Click="RotateCW_Click" Width="68" />
-        <Button Grid.Row="3" Content="Capture Panoramas" Height="Auto" HorizontalAlignment="Center" Margin="522,10,569,10" Click="CapturePanoramas_Click" Width="115" />
+        <Button Grid.Row="3" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="575,10,574,10" Click="ForwardButton_Click" Width="57" />
+        <Button Grid.Row="3" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="637,10,499,10" Click="BackwardButton_Click" Width="70" />
+        <Button Grid.Row="3" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="423,10,709,10" Click="RotateCCW_Click" Width="74" />
+        <Button Grid.Row="3" Content="RotateCW" Height="Auto" HorizontalAlignment="Center" Margin="502,10,636,10" Click="RotateCW_Click" Width="68" />
+        <Button Grid.Row="3" Content="Capture Panoramas" Height="Auto" HorizontalAlignment="Center" Margin="712,10,379,10" Click="CapturePanoramas_Click" Width="115" />
     </Grid>
 </Window>

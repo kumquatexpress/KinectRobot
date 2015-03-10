@@ -51,10 +51,11 @@
         private DepthFrameReader depthFrameReader = null;
         private FrameDescription depthFrameDescription = null;
         private FrameDescription colorFrameDescription = null;
+        private FrameDescription infraFrameDescription = null;
 
         private WriteableBitmap depthBitmap = null;
         private WriteableBitmap colorBitmap = null;
-        private WriteableBitmap infraBitmap = null;
+        private BitmapSource infraBitmap = null;
         private byte[] colors = null;
         private ushort[] depths = null;
         private DepthSpacePoint[] mappedColor = null;
@@ -86,6 +87,7 @@
             // get FrameDescription from DepthFrameSource
             this.depthFrameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
             this.colorFrameDescription = this.kinectSensor.ColorFrameSource.CreateFrameDescription(ColorImageFormat.Bgra);
+            this.infraFrameDescription = this.kinectSensor.InfraredFrameSource.FrameDescription;
 
             // allocate space to put the pixels being received and converted
             this.depthPixels = new ushort[this.depthFrameDescription.Width * this.depthFrameDescription.Height];
@@ -93,6 +95,7 @@
             // create the bitmap to display
             this.depthBitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Gray16, null);
             this.colorBitmap = new WriteableBitmap(this.colorFrameDescription.Width, this.colorFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgr32, null);
+            this.infraBitmap = new WriteableBitmap(this.infraFrameDescription.Width, this.infraFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgr32, null);
             this.kinect = new KinectReader(depthBitmap, colorBitmap);
 
             // open the sensor
@@ -407,6 +410,25 @@
 
             string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
+            if (this.infraBitmap != null)
+            {
+                BitmapEncoder encoder = new PngBitmapEncoder();
+
+                // create frame from the writable bitmap and add to encoder
+                encoder.Frames.Add(BitmapFrame.Create(this.infraBitmap));
+                string path = System.IO.Path.Combine(myPhotos, String.Format("Infra-{0:d3}-{1:d3}.png", this.panoramaNum, this.imageNum));
+                try
+                {
+                    // FileStream is IDisposable
+                    using (FileStream fs = new FileStream(path, FileMode.Create))
+                    {
+                        encoder.Save(fs);
+                    }
+
+                }
+                catch (IOException)
+                {}
+            }
             if (this.depthBitmap != null && this.colorBitmap != null)
             {
                 // create a png bitmap encoder which knows how to save a .png file
@@ -527,15 +549,14 @@
         {
             int width = frame.FrameDescription.Width;
             int height = frame.FrameDescription.Height;
-            int format = PixelFormats.Bgr32.BitsPerPixel;
+            int format = PixelFormats.Gray16.BitsPerPixel;
 
             ushort[] infraredData = new ushort[width * height];
-            byte[] pixelData = new byte[width * height * ( format + 7) / 8];
             frame.CopyFrameDataToArray(infraredData);
 
-            this.infraBitmap.WritePixels(
-                new Int32Rect(0, 0, this.infraBitmap.PixelWidth, this.infraBitmap.PixelHeight),
-                infraredData, 2*this.infraBitmap.PixelWidth, 0);       
+            int stride = width * format / 8;
+
+            infraBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, infraredData, stride);    
         }
     }
 
