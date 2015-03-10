@@ -82,7 +82,15 @@
 		}
 
 		private void sendBytes(params byte[] bytes) {
-			serialPort.Write(bytes, 0, bytes.Length);
+            try
+            {
+                serialPort.Write(bytes, 0, bytes.Length);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine("Robot not in use or not available.");
+            }
 		}
 	}
 }

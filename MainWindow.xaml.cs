@@ -378,7 +378,7 @@
             }      
         }
 
-        private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
+        private void ScreenShot_Click(object sender, RoutedEventArgs e)
         {
             this.takeScreenshot = true;
         }
