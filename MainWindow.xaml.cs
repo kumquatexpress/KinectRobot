@@ -50,18 +50,23 @@
         private KinectSensor kinectSensor = null;
         private DepthFrameReader depthFrameReader = null;
         private FrameDescription depthFrameDescription = null;
+        private FrameDescription colorFrameDescription = null;
+
         private WriteableBitmap depthBitmap = null;
         private WriteableBitmap colorBitmap = null;
-        private FrameDescription colorFrameDescription = null;
-        private CoordinateMapper cm = null;
-        private ushort[] depthPixels = null;
-        private byte[] depthBytes = null;
-        private byte[] colorBytes = null;
-        private bool takeScreenshot = false;
-        private bool dumpPpms = false;
+        private WriteableBitmap infraBitmap = null;
         private byte[] colors = null;
         private ushort[] depths = null;
         private DepthSpacePoint[] mappedColor = null;
+
+        private CoordinateMapper cm = null;
+
+        private ushort[] depthPixels = null;
+        private byte[] depthBytes = null;
+        private byte[] colorBytes = null;
+
+        private bool takeScreenshot = false;
+        private bool dumpPpms = false;
         private int panoramaNum = 0;
         private int imageNum = 0;
         private bool capturePanorama = false;
@@ -211,7 +216,7 @@
             {
                 _sensor.Open();
 
-                _reader = _sensor.OpenMultiSourceFrameReader(FrameSourceTypes.Color | FrameSourceTypes.Depth);
+                _reader = _sensor.OpenMultiSourceFrameReader(FrameSourceTypes.Color | FrameSourceTypes.Depth | FrameSourceTypes.Infrared);
                 _reader.MultiSourceFrameArrived += Reader_MultiSourceFrameArrived;
                 depthCamera.Source = this.depthBitmap;
                 colorCamera.Source = this.colorBitmap;
@@ -259,6 +264,14 @@
         {
             var reference = e.FrameReference.AcquireFrame();
 
+            // Infrared
+            using (var infraFrame = reference.InfraredFrameReference.AcquireFrame())
+            {
+                if (infraFrame != null)
+                {
+                    RenderInfraredPixels(infraFrame);
+                }
+            }
             // Color
             using (var colorFrame = reference.ColorFrameReference.AcquireFrame())
             {
@@ -354,9 +367,9 @@
                             }
                         }
                         
-
                         depthCamera.Source = this.depthBitmap;
                         colorCamera.Source = this.colorBitmap;
+                        infraCamera.Source = this.infraBitmap;
                     }
                 }
             }      
@@ -508,6 +521,21 @@
                 this.depthPixels,
                 2 * this.depthBitmap.PixelWidth,
                 0);
+        }
+
+        private void RenderInfraredPixels(InfraredFrame frame)
+        {
+            int width = frame.FrameDescription.Width;
+            int height = frame.FrameDescription.Height;
+            int format = PixelFormats.Bgr32.BitsPerPixel;
+
+            ushort[] infraredData = new ushort[width * height];
+            byte[] pixelData = new byte[width * height * ( format + 7) / 8];
+            frame.CopyFrameDataToArray(infraredData);
+
+            this.infraBitmap.WritePixels(
+                new Int32Rect(0, 0, this.infraBitmap.PixelWidth, this.infraBitmap.PixelHeight),
+                infraredData, 2*this.infraBitmap.PixelWidth, 0);       
         }
     }
 

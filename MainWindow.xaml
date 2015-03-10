@@ -19,10 +19,13 @@
         <Viewbox Grid.Row="1" HorizontalAlignment="Right">
             <Image Name="depthCamera" Width="480" Height="270" Stretch="UniformToFill"/>
         </Viewbox>
-        <Button Grid.Row="2" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="385,10,764,10" Click="ForwardButton_Click" Width="57" />
-        <Button Grid.Row="2" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="447,10,689,10" Click="BackwardButton_Click" Width="70" />
-        <Button Grid.Row="2" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="233,10,899,10" Click="RotateCCW_Click" Width="74" />
-        <Button Grid.Row="2" Content="RotateCW" Height="Auto" HorizontalAlignment="Center" Margin="312,10,826,10" Click="RotateCW_Click" Width="68" />
-        <Button Grid.Row="2" Content="Capture Panoramas" Height="Auto" HorizontalAlignment="Center" Margin="522,10,569,10" Click="CapturePanoramas_Click" Width="115" />
+        <Viewbox Grid.Row="2" HorizontalAlignment="Center">
+            <Image Name="infraCamera" Width="480" Height="270" Stretch="UniformToFill"/>
+        </Viewbox>
+        <Button Grid.Row="3" Content="Forward" Height="Auto" HorizontalAlignment="Center" Margin="385,10,764,10" Click="ForwardButton_Click" Width="57" />
+        <Button Grid.Row="3" Content="Backward" Height="Auto" HorizontalAlignment="Center" Margin="447,10,689,10" Click="BackwardButton_Click" Width="70" />
+        <Button Grid.Row="3" Content="RotateCCW" Height="Auto" HorizontalAlignment="Center" Margin="233,10,899,10" Click="RotateCCW_Click" Width="74" />
+        <Button Grid.Row="3" Content="RotateCW" Height="Auto" HorizontalAlignment="Center" Margin="312,10,826,10" Click="RotateCW_Click" Width="68" />
+        <Button Grid.Row="3" Content="Capture Panoramas" Height="Auto" HorizontalAlignment="Center" Margin="522,10,569,10" Click="CapturePanoramas_Click" Width="115" />
     </Grid>
 </Window>
